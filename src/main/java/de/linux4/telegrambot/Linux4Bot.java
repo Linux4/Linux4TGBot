@@ -2,12 +2,13 @@ package de.linux4.telegrambot;
 
 import de.linux4.telegrambot.cmd.Command;
 import de.linux4.telegrambot.cmd.NotesCommand;
+import de.linux4.telegrambot.cmd.PromoteCommand;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -48,7 +49,10 @@ public class Linux4Bot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
 
+        UserUtilities.init(this);
+
         this.commands.add(new NotesCommand(this));
+        this.commands.add(new PromoteCommand(this));
     }
 
     @Override
@@ -66,6 +70,14 @@ public class Linux4Bot extends TelegramLongPollingBot {
         if (mysql == null) {
             System.err.println("Database not connected!");
             return;
+        }
+
+        if (update.hasChatMember()) {
+            UserUtilities.setUserName(this, update.getChatMember().getNewChatMember().getUser().getId(),
+                    update.getChatMember().getNewChatMember().getUser().getUserName());
+        } else if (update.hasMessage()) {
+            UserUtilities.setUserName(this, update.getMessage().getFrom().getId(),
+                    update.getMessage().getFrom().getUserName());
         }
 
         if (update.hasMessage() && update.getMessage().hasText()) {
@@ -112,5 +124,34 @@ public class Linux4Bot extends TelegramLongPollingBot {
         sm.setReplyToMessageId(message.getMessageId());
         execute(sm);
         return false;
+    }
+
+    public User getUserRef(Message message) throws TelegramApiException {
+        if (message.getReplyToMessage() != null) {
+            return message.getReplyToMessage().getFrom();
+        }
+
+        if (message.getEntities() != null) {
+            for (MessageEntity entity : message.getEntities()) {
+                if (entity.getType().equals(EntityType.MENTION)) {
+                    Long userId = UserUtilities.getUserId(this, entity.getText().substring(1));
+                    if (userId != null) {
+                        GetChatMember member = GetChatMember.builder().chatId(message.getChatId().toString())
+                                .userId(userId).build();
+                        User user = execute(member).getUser();
+
+                        if (user != null) return user;
+                    }
+
+                    SendMessage sm = new SendMessage(message.getChatId().toString(), "Unknown user!");
+                    sm.setReplyToMessageId(message.getMessageId());
+                    execute(sm);
+                } else if (entity.getType().equals(EntityType.TEXTMENTION)) {
+                    return entity.getUser();
+                }
+            }
+        }
+
+        return null;
     }
 }
