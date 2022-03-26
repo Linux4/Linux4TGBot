@@ -83,7 +83,15 @@ public class Linux4Bot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String firstWord = update.getMessage().getText().trim().split(" ")[0];
 
-            if (update.getMessage().getText().startsWith("#")) {
+            try {
+                if (firstWord.contains("@") && firstWord.split("@")[1].equalsIgnoreCase(getMe().getUserName())) {
+                    firstWord = firstWord.split("@")[0];
+                }
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+
+            if (firstWord.startsWith("#")) {
                 // is a Note
                 for (Command command : commands) {
                     if (command.getCommands().contains("notes")) {
@@ -95,7 +103,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         break;
                     }
                 }
-            } else if (update.getMessage().getText().trim().startsWith("/")) {
+            } else if (firstWord.startsWith("/")) {
                 for (Command command : commands) {
                     for (String commandName : command.getCommands()) {
                         if (commandName.equalsIgnoreCase(firstWord.substring(1))) {
