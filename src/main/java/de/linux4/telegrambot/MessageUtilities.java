@@ -28,11 +28,11 @@ public class MessageUtilities {
         return entityList;
     }
 
-    public static String entitiesToString(Message message) {
+    public static String entitiesToString(List<MessageEntity> entities) {
         JSONArray array = new JSONArray();
 
-        if (message.getEntities() != null) {
-            for (MessageEntity entity : message.getEntities()) {
+        if (entities != null) {
+            for (MessageEntity entity : entities) {
                 try {
                     array.put(OBJECT_MAPPER.writeValueAsString(entity));
                 } catch (JsonProcessingException e) {
