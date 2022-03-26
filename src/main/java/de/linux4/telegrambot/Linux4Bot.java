@@ -1,9 +1,6 @@
 package de.linux4.telegrambot;
 
-import de.linux4.telegrambot.cmd.Command;
-import de.linux4.telegrambot.cmd.DemoteCommand;
-import de.linux4.telegrambot.cmd.NotesCommand;
-import de.linux4.telegrambot.cmd.PromoteCommand;
+import de.linux4.telegrambot.cmd.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
@@ -52,6 +49,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         UserUtilities.init(this);
 
+        this.commands.add(new BanCommand(this));
         this.commands.add(new DemoteCommand(this));
         this.commands.add(new NotesCommand(this));
         this.commands.add(new PromoteCommand(this));
