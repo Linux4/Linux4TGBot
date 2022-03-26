@@ -5,6 +5,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
+import org.telegram.telegrambots.meta.api.methods.groupadministration.LeaveChat;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
@@ -72,6 +73,30 @@ public class Linux4Bot extends TelegramLongPollingBot {
             return;
         }
 
+        // Check if this is an allowed group
+        try {
+            if (update.hasMyChatMember() && !update.getMyChatMember().getChat().isUserChat()) {
+                boolean allowed = false;
+                GetChatAdministrators administrators = GetChatAdministrators.builder()
+                        .chatId(update.getMyChatMember().getChat().getId().toString()).build();
+                for (ChatMember admin : execute(administrators)) {
+                    if (admin.getUser().getUserName().equalsIgnoreCase(getMe().getUserName()
+                            .substring(0, getMe().getUserName().length() - "bot".length()))) {
+                        allowed = true;
+                        break;
+                    }
+                }
+
+                if (!allowed) {
+                    SendMessage sm = new SendMessage(update.getMyChatMember().getChat().getId().toString(),
+                            "This group is not authorized to use the bot!");
+                    execute(sm);
+                    execute(LeaveChat.builder().chatId(update.getMyChatMember().getChat().getId().toString()).build());
+                }
+            }
+        } catch (TelegramApiException ignored) {
+        }
+
         if (update.hasChatMember()) {
             UserUtilities.setUserName(this, update.getChatMember().getNewChatMember().getUser().getId(),
                     update.getChatMember().getNewChatMember().getUser().getUserName());
@@ -82,6 +107,9 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         if (update.hasMessage() && update.getMessage().hasText()) {
             String firstWord = update.getMessage().getText().trim().split(" ")[0];
+            // Only allow help and rules in pm
+            if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase("/rules")
+                && !firstWord.equalsIgnoreCase("/help")) return;
 
             try {
                 if (firstWord.contains("@") && firstWord.split("@")[1].equalsIgnoreCase(getMe().getUserName())) {
