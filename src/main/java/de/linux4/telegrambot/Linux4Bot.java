@@ -62,6 +62,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         this.commands.add(new BanCommand(this));
         this.commands.add(new DemoteCommand(this));
+        this.commands.add(new IDCommand(this));
         this.commands.add(new NotesCommand(this));
         this.commands.add(new PromoteCommand(this));
         this.commands.add(new RulesCommand(this));
@@ -153,7 +154,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
             String firstWord = update.getMessage().getText().trim().split(" ")[0];
             // Only allow help and rules in pm
             if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase("/help")
-                    && !firstWord.equalsIgnoreCase("/start")) return;
+                    && !firstWord.equalsIgnoreCase("/start") && !firstWord.equalsIgnoreCase("/id"))
+                return;
 
             try {
                 if (firstWord.contains("@") && firstWord.split("@")[1].equalsIgnoreCase(getMe().getUserName())) {
