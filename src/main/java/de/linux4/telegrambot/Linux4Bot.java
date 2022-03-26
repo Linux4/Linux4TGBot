@@ -1,6 +1,8 @@
 package de.linux4.telegrambot;
 
+import com.mysql.cj.protocol.x.XMessage;
 import de.linux4.telegrambot.cmd.*;
+import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
@@ -38,6 +40,15 @@ public class Linux4Bot extends TelegramLongPollingBot {
     public Connection mysql;
 
     public Linux4Bot(String botToken) {
+        super(new DefaultBotOptions() {
+            @Override
+            public List<String> getAllowedUpdates() {
+                // All updates
+                return List.of("message", "edited_message", "channel_post", "edited_channel_post", "inline_query",
+                        "chosen_inline_result", "callback_query", "shipping_query", "pre_checkout_query", "poll",
+                        "poll_answer", "my_chat_member", "chat_member", "chat_join_request");
+            }
+        });
         this.botToken = botToken;
 
         try {
@@ -54,6 +65,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.commands.add(new DemoteCommand(this));
         this.commands.add(new NotesCommand(this));
         this.commands.add(new PromoteCommand(this));
+        this.commands.add(new SetWelcomeCommand(this));
     }
 
     @Override
@@ -100,6 +112,36 @@ public class Linux4Bot extends TelegramLongPollingBot {
         if (update.hasChatMember()) {
             UserUtilities.setUserName(this, update.getChatMember().getNewChatMember().getUser().getId(),
                     update.getChatMember().getNewChatMember().getUser().getUserName());
+
+            String status = update.getChatMember().getNewChatMember().getStatus();
+            if (status.equalsIgnoreCase("member") || status.equalsIgnoreCase("left")) {
+                String welcomeMsg = SetWelcomeCommand.getWelcomeMessage(this,
+                        update.getChatMember().getChat().getId(), status.equalsIgnoreCase("member"));
+
+                if (welcomeMsg != null) {
+                    int index = 0;
+                    List<MessageEntity> entities = new ArrayList<>();
+                    String userName = update.getChatMember().getNewChatMember().getUser().getUserName();
+                    if (userName == null) userName = update.getChatMember().getNewChatMember().getUser().getFirstName();
+                    for (index = welcomeMsg.indexOf("{username}"); index >= 0; index = welcomeMsg.indexOf("{username}", index + 1)) {
+                        MessageEntity entity = MessageEntity.builder().type(EntityType.TEXTMENTION)
+                                .user(update.getChatMember().getNewChatMember().getUser())
+                                .offset(index + (entities.size() * userName.length() + (entities.size() > 0 ? 1 : 0))
+                                        - (entities.size() * "{username}".length()))
+                                .length(userName.length()).build();
+                        entities.add(entity);
+                    }
+                    welcomeMsg = welcomeMsg.replaceAll("\\{username}", userName);
+                    welcomeMsg = welcomeMsg.replaceAll("\\{chatname}", update.getChatMember().getChat().getTitle());
+                    SendMessage sm = new SendMessage(update.getChatMember().getChat().getId().toString(), welcomeMsg);
+                    sm.setEntities(entities);
+                    try {
+                        execute(sm);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         } else if (update.hasMessage()) {
             UserUtilities.setUserName(this, update.getMessage().getFrom().getId(),
                     update.getMessage().getFrom().getUserName());
