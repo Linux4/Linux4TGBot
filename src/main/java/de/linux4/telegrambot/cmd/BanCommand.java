@@ -13,13 +13,14 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class BanCommand extends Command {
 
     public BanCommand(Linux4Bot instance) {
-        super(instance, "kick", "ban");
+        super(instance, "kick", "ban", "unban");
     }
 
     @Override
     public void execute(String command, Message message) throws TelegramApiException {
         if (instance.enforceChatAdmin(message)) {
-            boolean isKick = message.getText().trim().substring(1).split(" ")[0].equalsIgnoreCase("kick");
+            boolean isKick = command.equalsIgnoreCase("kick");
+            boolean isUnban = command.equalsIgnoreCase("unban");
             String text = "User required!";
             User user = instance.getUserRef(message);
 
@@ -37,17 +38,19 @@ public class BanCommand extends Command {
 
                 if (!admin) {
                     try {
-                        BanChatMember ban = BanChatMember.builder().chatId(message.getChatId().toString())
-                                .userId(user.getId()).untilDate(0).build();
-                        instance.execute(ban);
-                        if (isKick) {
+                        if (!isUnban) {
+                            BanChatMember ban = BanChatMember.builder().chatId(message.getChatId().toString())
+                                    .userId(user.getId()).untilDate(0).build();
+                            instance.execute(ban);
+                        }
+                        if (isKick || isUnban) {
                             UnbanChatMember unban = UnbanChatMember.builder().chatId(message.getChatId().toString())
                                     .userId(user.getId()).build();
                             instance.execute(unban);
                         }
-                        text = (isKick ? "Kicked" : "Banned") + " " + user.getUserName() + "!";
+                        text = (isKick ? "Kicked" : (isUnban ? "Unbanned" : "Banned")) + " " + user.getUserName() + "!";
                     } catch (TelegramApiException ex) {
-                        text = "Failed to " + (isKick ? "kick" : "ban") + " " + user.getUserName() + "!";
+                        text = "Failed to " + (isKick ? "kick" : (isUnban ? "unban" : "ban")) + " " + user.getUserName() + "!";
                     }
                 }
             }

@@ -176,7 +176,10 @@ public class Linux4Bot extends TelegramLongPollingBot {
                                 .userId(userId).build();
                         User user = execute(member).getUser();
 
-                        if (user != null) return user;
+                        if (user != null) {
+                            UserUtilities.setUserName(this, user.getId(), user.getUserName());
+                            return user;
+                        }
                     }
 
                     SendMessage sm = new SendMessage(message.getChatId().toString(), "Unknown user!");
