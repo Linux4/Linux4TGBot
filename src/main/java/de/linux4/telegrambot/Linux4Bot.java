@@ -1,6 +1,5 @@
 package de.linux4.telegrambot;
 
-import com.mysql.cj.protocol.x.XMessage;
 import de.linux4.telegrambot.cmd.*;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -36,7 +35,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
     }
 
     private final String botToken;
-    private final List<Command> commands = new ArrayList<>();
+    public final List<Command> commands = new ArrayList<>();
     public Connection mysql;
 
     public Linux4Bot(String botToken) {
@@ -65,7 +64,10 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.commands.add(new DemoteCommand(this));
         this.commands.add(new NotesCommand(this));
         this.commands.add(new PromoteCommand(this));
+        this.commands.add(new RulesCommand(this));
+        this.commands.add(new SetRulesCommand(this));
         this.commands.add(new SetWelcomeCommand(this));
+        this.commands.add(new StartCommand(this));
     }
 
     @Override
@@ -150,8 +152,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String firstWord = update.getMessage().getText().trim().split(" ")[0];
             // Only allow help and rules in pm
-            if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase("/rules")
-                && !firstWord.equalsIgnoreCase("/help")) return;
+            if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase("/help")
+                    && !firstWord.equalsIgnoreCase("/start")) return;
 
             try {
                 if (firstWord.contains("@") && firstWord.split("@")[1].equalsIgnoreCase(getMe().getUserName())) {

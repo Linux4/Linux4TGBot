@@ -28,12 +28,13 @@ public class MessageUtilities {
         return entityList;
     }
 
-    public static String entitiesToString(List<MessageEntity> entities) {
+    public static String entitiesToString(List<MessageEntity> entities, int translateOffset) {
         JSONArray array = new JSONArray();
 
         if (entities != null) {
             for (MessageEntity entity : entities) {
                 try {
+                    entity.setOffset(entity.getOffset() + translateOffset);
                     array.put(OBJECT_MAPPER.writeValueAsString(entity));
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();

@@ -112,10 +112,10 @@ public class NotesCommand extends Command {
                             fileID = message.getReplyToMessage().getVideo().getFileId();
                         }
                         if (noteType.equals(TYPE_TEXT))
-                            entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getEntities());
+                            entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getEntities(), 0);
                         else {
                             noteText = message.getReplyToMessage().getCaption();
-                            entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getCaptionEntities());
+                            entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getCaptionEntities(), 0);
                         }
                     } else {
                         if (message.hasText()) {
@@ -140,11 +140,13 @@ public class NotesCommand extends Command {
                         }
                         if (noteText.startsWith("\n")) noteText = noteText.substring(1);
                         if (noteType.equals(TYPE_TEXT))
-                            entities = MessageUtilities.entitiesToString(message.getEntities());
+                            entities = MessageUtilities.entitiesToString(message.getEntities(),
+                                    noteText.length() - message.getText().length());
                         else {
                             noteText = message.getCaption().trim().substring(1).substring(command.length()).trim()
                                     .substring(noteName.length() + 1).trim();
-                            entities = MessageUtilities.entitiesToString(message.getCaptionEntities());
+                            entities = MessageUtilities.entitiesToString(message.getCaptionEntities(),
+                                    noteText.length() - message.getCaption().length());
                         }
                     }
 
