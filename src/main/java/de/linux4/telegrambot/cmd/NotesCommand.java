@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class NotesCommand extends Command {
@@ -231,7 +232,8 @@ public class NotesCommand extends Command {
                     e.printStackTrace();
                 }
 
-                List<MessageEntity> msgEntities = MessageUtilities.entitiesFromString(entities);
+                List<MessageEntity> msgEntities = entities.trim().length() > 0 ? MessageUtilities.entitiesFromString(entities)
+                        : new ArrayList<>();
                 StringBuilder msgText = new StringBuilder(text);
                 InlineKeyboardMarkup keyboard = MessageUtilities.extractButtons(msgText, msgEntities);
                 text = msgText.toString();
