@@ -40,10 +40,12 @@ public class SetWelcomeCommand extends Command {
         if (instance.enforceChatAdmin(message)) {
             boolean isWelcome = command.equalsIgnoreCase("setwelcome");
             String text = "New " + (isWelcome ? "welcome" : "goodbye") + " message set!";
-            String[] broken = message.getText().trim().split(" ");
+            String[] broken = message.getReplyToMessage() != null ? message.getReplyToMessage().getText().trim().split(" ")
+                    : message.getText().trim().split(" ");
 
             if (broken.length > 1) {
-                String welcome = Joiner.on(' ').join(Arrays.copyOfRange(broken, 1, broken.length));
+                int startIndex = message.getReplyToMessage() != null ? 0 : 1;
+                String welcome = Joiner.on(' ').join(Arrays.copyOfRange(broken, startIndex, broken.length));
 
                 try {
                     instance.mysql.prepareStatement("DELETE FROM Welcome WHERE ChatID = " + message.getChatId()
