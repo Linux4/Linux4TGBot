@@ -234,11 +234,14 @@ public class NotesCommand extends Command {
 
                 List<MessageEntity> msgEntities = entities.trim().length() > 0 ? MessageUtilities.entitiesFromString(entities)
                         : new ArrayList<>();
-                StringBuilder msgText = new StringBuilder(text);
-                InlineKeyboardMarkup keyboard = MessageUtilities.extractButtons(msgText, msgEntities);
-                text = msgText.toString();
-                // Putting keyboard removed all text
-                if (keyboard != null && text.trim().length() == 0) text = noteName;
+                InlineKeyboardMarkup keyboard = null;
+                if (text != null) {
+                    StringBuilder msgText = new StringBuilder(text);
+                    keyboard = MessageUtilities.extractButtons(msgText, msgEntities);
+                    text = msgText.toString();
+                    // Putting keyboard removed all text
+                    if (keyboard != null && text.trim().length() == 0) text = noteName;
+                }
 
                 switch (noteType) {
                     case TYPE_AUDIO:
