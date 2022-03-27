@@ -5,11 +5,14 @@ import de.linux4.telegrambot.MessageUtilities;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.MessageEntity;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 public class NotesCommand extends Command {
 
@@ -228,55 +231,68 @@ public class NotesCommand extends Command {
                     e.printStackTrace();
                 }
 
+                List<MessageEntity> msgEntities = MessageUtilities.entitiesFromString(entities);
+                StringBuilder msgText = new StringBuilder(text);
+                InlineKeyboardMarkup keyboard = MessageUtilities.extractButtons(msgText, msgEntities);
+                text = msgText.toString();
+                // Putting keyboard removed all text
+                if (keyboard != null && text.trim().length() == 0) text = noteName;
+
                 switch (noteType) {
                     case TYPE_AUDIO:
                         SendAudio sa = new SendAudio(message.getChatId().toString(), new InputFile(fileID));
                         if (entities.length() > 0) {
-                            sa.setCaptionEntities(MessageUtilities.entitiesFromString(entities));
+                            sa.setCaptionEntities(msgEntities);
                         }
                         sa.setCaption(text);
                         sa.setReplyToMessageId(message.getMessageId());
+                        sa.setReplyMarkup(keyboard);
                         instance.execute(sa);
                         break;
                     case TYPE_DOCUMENT:
                         SendDocument sd = new SendDocument(message.getChatId().toString(), new InputFile(fileID));
                         if (entities.length() > 0) {
-                            sd.setCaptionEntities(MessageUtilities.entitiesFromString(entities));
+                            sd.setCaptionEntities(msgEntities);
                         }
                         sd.setCaption(text);
                         sd.setReplyToMessageId(message.getMessageId());
+                        sd.setReplyMarkup(keyboard);
                         instance.execute(sd);
                         break;
                     case TYPE_PHOTO:
                         SendPhoto sp = new SendPhoto(message.getChatId().toString(), new InputFile(fileID));
                         if (entities.length() > 0) {
-                            sp.setCaptionEntities(MessageUtilities.entitiesFromString(entities));
+                            sp.setCaptionEntities(msgEntities);
                         }
                         sp.setCaption(text);
                         sp.setReplyToMessageId(message.getMessageId());
+                        sp.setReplyMarkup(keyboard);
                         instance.execute(sp);
                         break;
                     case TYPE_STICKER:
                         SendSticker ss = new SendSticker(message.getChatId().toString(), new InputFile(fileID));
                         ss.setReplyToMessageId(message.getMessageId());
+                        ss.setReplyMarkup(keyboard);
                         instance.execute(ss);
                         break;
                     case TYPE_TEXT:
                         sm = new SendMessage(message.getChatId().toString(), text);
                         if (entities.length() > 0) {
-                            sm.setEntities(MessageUtilities.entitiesFromString(entities));
+                            sm.setEntities(msgEntities);
                         }
                         sm.setDisableWebPagePreview(true);
                         sm.setReplyToMessageId(message.getMessageId());
+                        sm.setReplyMarkup(keyboard);
                         instance.execute(sm);
                         break;
                     case TYPE_VIDEO:
                         SendVideo sv = new SendVideo(message.getChatId().toString(), new InputFile(fileID));
                         if (entities.length() > 0) {
-                            sv.setCaptionEntities(MessageUtilities.entitiesFromString(entities));
+                            sv.setCaptionEntities(msgEntities);
                         }
                         sv.setCaption(text);
                         sv.setReplyToMessageId(message.getMessageId());
+                        sv.setReplyMarkup(keyboard);
                         instance.execute(sv);
                         break;
                 }
