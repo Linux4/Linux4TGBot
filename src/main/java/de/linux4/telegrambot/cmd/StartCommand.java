@@ -15,11 +15,15 @@ public class StartCommand extends Command {
         if (message.getText().trim().split(" ").length > 1) {
             String startArgs = message.getText().trim().split(" ")[1];
 
-            for (Command botCommand : instance.commands) {
-                for (String commandName : botCommand.getCommands()) {
-                    if (commandName.equalsIgnoreCase(startArgs.split("_")[0])) {
-                        botCommand.execute(startArgs, message);
-                        break;
+            // Currently only /help and /rules support this.
+            if (startArgs.split("_")[0].equalsIgnoreCase("rules")
+                || startArgs.split("_")[0].equalsIgnoreCase("help")) {
+                for (Command botCommand : instance.commands) {
+                    for (String commandName : botCommand.getCommands()) {
+                        if (commandName.equalsIgnoreCase(startArgs.split("_")[0])) {
+                            botCommand.execute(startArgs, message);
+                            break;
+                        }
                     }
                 }
             }
