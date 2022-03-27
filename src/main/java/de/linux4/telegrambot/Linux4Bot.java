@@ -69,6 +69,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.commands.add(new SetRulesCommand(this));
         this.commands.add(new SetWelcomeCommand(this));
         this.commands.add(new StartCommand(this));
+        this.commands.add(new TMuteCommand(this));
     }
 
     @Override
