@@ -16,32 +16,45 @@ public class DemoteCommand extends Command {
     }
 
     @Override
-    public void execute(String command, Message message) throws TelegramApiException {
-        if (instance.enforceChatAdmin(message)) {
-            User user = instance.getUserRef(message);
-            String text = "User required!";
+    public Category getCategory() {
+        return Command.CATEGORY_ADMIN;
+    }
 
-            if (user != null) {
-                text = "User isn't Admin in this group!";
-                GetChatAdministrators administrators = GetChatAdministrators.builder()
-                        .chatId(message.getChatId().toString()).build();
-                for (ChatMember member : instance.execute(administrators)) {
-                    if (member.getUser().getId().equals(user.getId())) {
-                        text = "Demoted " + user.getUserName() + "!";
-                        PromoteChatMember demote = PromoteChatMember.builder().chatId(message.getChatId().toString())
-                                .userId(user.getId()).build();
-                        try {
-                            instance.execute(demote);
-                        } catch (TelegramApiException ex) {
-                            text = "Failed to demote " + user.getUserName() + "!";
-                        }
-                        break;
+    @Override
+    public HelpInfo getHelpInfo(String command) {
+        return new HelpInfo("<reply\\/username\\/mention\\/userid>", "Demote a user\\.");
+    }
+
+    @Override
+    public boolean isUserCommand(String command) {
+        return false;
+    }
+
+    @Override
+    public void execute(String command, Message message) throws TelegramApiException {
+        User user = instance.getUserRef(message);
+        String text = "User required!";
+
+        if (user != null) {
+            text = "User isn't Admin in this group!";
+            GetChatAdministrators administrators = GetChatAdministrators.builder()
+                    .chatId(message.getChatId().toString()).build();
+            for (ChatMember member : instance.execute(administrators)) {
+                if (member.getUser().getId().equals(user.getId())) {
+                    text = "Demoted " + user.getUserName() + "!";
+                    PromoteChatMember demote = PromoteChatMember.builder().chatId(message.getChatId().toString())
+                            .userId(user.getId()).build();
+                    try {
+                        instance.execute(demote);
+                    } catch (TelegramApiException ex) {
+                        text = "Failed to demote " + user.getUserName() + "!";
                     }
+                    break;
                 }
             }
-            SendMessage sm = new SendMessage(message.getChatId().toString(), text);
-            sm.setReplyToMessageId(message.getMessageId());
-            instance.execute(sm);
         }
+        SendMessage sm = new SendMessage(message.getChatId().toString(), text);
+        sm.setReplyToMessageId(message.getMessageId());
+        instance.execute(sm);
     }
 }

@@ -2,7 +2,6 @@ package de.linux4.telegrambot.cmd;
 
 import de.linux4.telegrambot.Linux4Bot;
 import de.linux4.telegrambot.MessageUtilities;
-import de.linux4.telegrambot.cmd.Command;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -20,6 +19,16 @@ public class RulesCommand extends Command {
 
     public RulesCommand(Linux4Bot instance) {
         super(instance, "rules");
+    }
+
+    @Override
+    public Category getCategory() {
+        return Command.CATEGORY_RULES;
+    }
+
+    @Override
+    public HelpInfo getHelpInfo(String command) {
+        return new HelpInfo("", "Check the current chat rules\\.");
     }
 
     @Override

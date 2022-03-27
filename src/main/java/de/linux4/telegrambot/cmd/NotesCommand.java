@@ -39,6 +39,29 @@ public class NotesCommand extends Command {
         }
     }
 
+    @Override
+    public Category getCategory() {
+        return Command.CATEGORY_NOTES;
+    }
+
+    @Override
+    public HelpInfo getHelpInfo(String command) {
+        switch (command) {
+            case "clear": return new HelpInfo("<notename>", "Delete the associated note\\.");
+            case "get": return new HelpInfo("<notename>", "Get a note\\.");
+            case "notes": return new HelpInfo("", "List all notes in the current chat\\.");
+            case "save": return new HelpInfo("<notename> <note text>", "Save a new note called \"word\"\\." +
+                    " Replying to a message will save that message\\. Even works on media\\!");
+        }
+
+        return super.getHelpInfo(command);
+    }
+
+    @Override
+    public boolean isUserCommand(String command) {
+        return !command.equals("save") && !command.equals("clear");
+    }
+
     private boolean noteExists(Long chatId, String noteName) {
         try {
             PreparedStatement ps = instance.mysql.prepareStatement("SELECT ChatID FROM Notes WHERE ChatID =" + chatId + " AND Name LIKE ?");
@@ -76,136 +99,132 @@ public class NotesCommand extends Command {
                 instance.execute(sm);
                 break;
             case "save":
-                if (instance.enforceChatAdmin(message)) {
-                    if (message.getText().trim().split(" ").length == 1) {
-                        sm = new SendMessage(message.getChatId().toString(), "Name required!");
-                        sm.setReplyToMessageId(message.getMessageId());
-                        instance.execute(sm);
-                        return;
-                    } else if (message.getText().trim().split(" ").length == 2 && message.getReplyToMessage() == null) {
-                        sm = new SendMessage(message.getChatId().toString(), "Text required!");
-                        sm.setReplyToMessageId(message.getMessageId());
-                        ;
-                        instance.execute(sm);
-                        return;
-                    }
+                if (message.getText().trim().split(" ").length == 1) {
+                    sm = new SendMessage(message.getChatId().toString(), "Name required!");
+                    sm.setReplyToMessageId(message.getMessageId());
+                    instance.execute(sm);
+                    return;
+                } else if (message.getText().trim().split(" ").length == 2 && message.getReplyToMessage() == null) {
+                    sm = new SendMessage(message.getChatId().toString(), "Text required!");
+                    sm.setReplyToMessageId(message.getMessageId());
+                    ;
+                    instance.execute(sm);
+                    return;
+                }
 
-                    String noteName = message.getText().trim().split(" ")[1].split("\n")[0];
-                    String noteText = "";
-                    String noteType = TYPE_TEXT;
-                    String fileID = "";
-                    String entities;
-                    if (message.getReplyToMessage() != null) {
-                        if (message.getReplyToMessage().hasText()) {
-                            noteText = message.getReplyToMessage().getText();
-                        }
-                        if (message.getReplyToMessage().hasAudio()) {
-                            noteType = TYPE_AUDIO;
-                            fileID = message.getReplyToMessage().getAudio().getFileId();
-                        } else if (message.getReplyToMessage().hasDocument()) {
-                            noteType = TYPE_DOCUMENT;
-                            fileID = message.getReplyToMessage().getDocument().getFileId();
-                        } else if (message.getReplyToMessage().hasPhoto()) {
-                            noteType = TYPE_PHOTO;
-                            fileID = message.getReplyToMessage().getPhoto().get(2).getFileId();
-                        } else if (message.getReplyToMessage().hasSticker()) {
-                            noteType = TYPE_STICKER;
-                            fileID = message.getReplyToMessage().getSticker().getFileId();
-                        } else if (message.getReplyToMessage().hasVideo()) {
-                            noteType = TYPE_VIDEO;
-                            fileID = message.getReplyToMessage().getVideo().getFileId();
-                        }
-                        if (noteType.equals(TYPE_TEXT))
-                            entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getEntities(), 0);
-                        else {
-                            noteText = message.getReplyToMessage().getCaption();
-                            entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getCaptionEntities(), 0);
-                        }
+                String noteName = message.getText().trim().split(" ")[1].split("\n")[0];
+                String noteText = "";
+                String noteType = TYPE_TEXT;
+                String fileID = "";
+                String entities;
+                if (message.getReplyToMessage() != null) {
+                    if (message.getReplyToMessage().hasText()) {
+                        noteText = message.getReplyToMessage().getText();
+                    }
+                    if (message.getReplyToMessage().hasAudio()) {
+                        noteType = TYPE_AUDIO;
+                        fileID = message.getReplyToMessage().getAudio().getFileId();
+                    } else if (message.getReplyToMessage().hasDocument()) {
+                        noteType = TYPE_DOCUMENT;
+                        fileID = message.getReplyToMessage().getDocument().getFileId();
+                    } else if (message.getReplyToMessage().hasPhoto()) {
+                        noteType = TYPE_PHOTO;
+                        fileID = message.getReplyToMessage().getPhoto().get(2).getFileId();
+                    } else if (message.getReplyToMessage().hasSticker()) {
+                        noteType = TYPE_STICKER;
+                        fileID = message.getReplyToMessage().getSticker().getFileId();
+                    } else if (message.getReplyToMessage().hasVideo()) {
+                        noteType = TYPE_VIDEO;
+                        fileID = message.getReplyToMessage().getVideo().getFileId();
+                    }
+                    if (noteType.equals(TYPE_TEXT))
+                        entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getEntities(), 0);
+                    else {
+                        noteText = message.getReplyToMessage().getCaption();
+                        entities = MessageUtilities.entitiesToString(message.getReplyToMessage().getCaptionEntities(), 0);
+                    }
+                } else {
+                    if (message.hasText()) {
+                        noteText = message.getText().trim().substring(1)
+                                .substring(command.length()).trim().substring(noteName.length() + 1).trim();
+                    }
+                    if (message.hasAudio()) {
+                        noteType = TYPE_AUDIO;
+                        fileID = message.getAudio().getFileId();
+                    } else if (message.hasDocument()) {
+                        noteType = TYPE_DOCUMENT;
+                        fileID = message.getDocument().getFileId();
+                    } else if (message.hasPhoto()) {
+                        noteType = TYPE_PHOTO;
+                        fileID = message.getPhoto().get(2).getFileId();
+                    } else if (message.hasSticker()) {
+                        noteType = TYPE_STICKER;
+                        fileID = message.getSticker().getFileId();
+                    } else if (message.hasVideo()) {
+                        noteType = TYPE_VIDEO;
+                        fileID = message.getVideo().getFileId();
+                    }
+                    if (noteText.startsWith("\n")) noteText = noteText.substring(1);
+                    if (noteType.equals(TYPE_TEXT))
+                        entities = MessageUtilities.entitiesToString(message.getEntities(),
+                                noteText.length() - message.getText().length());
+                    else {
+                        noteText = message.getCaption().trim().substring(1).substring(command.length()).trim()
+                                .substring(noteName.length() + 1).trim();
+                        entities = MessageUtilities.entitiesToString(message.getCaptionEntities(),
+                                noteText.length() - message.getCaption().length());
+                    }
+                }
+
+                try {
+                    PreparedStatement ps;
+                    if (noteExists(message.getChatId(), noteName)) {
+                        ps = instance.mysql.prepareStatement("UPDATE Notes SET Text = ?, Type = ?, Entities = ?, FileID = ? WHERE ChatID = "
+                                + message.getChatId() + " AND Name LIKE ? ");
                     } else {
-                        if (message.hasText()) {
-                            noteText = message.getText().trim().substring(1)
-                                    .substring(command.length()).trim().substring(noteName.length() + 1).trim();
-                        }
-                        if (message.hasAudio()) {
-                            noteType = TYPE_AUDIO;
-                            fileID = message.getAudio().getFileId();
-                        } else if (message.hasDocument()) {
-                            noteType = TYPE_DOCUMENT;
-                            fileID = message.getDocument().getFileId();
-                        } else if (message.hasPhoto()) {
-                            noteType = TYPE_PHOTO;
-                            fileID = message.getPhoto().get(2).getFileId();
-                        } else if (message.hasSticker()) {
-                            noteType = TYPE_STICKER;
-                            fileID = message.getSticker().getFileId();
-                        } else if (message.hasVideo()) {
-                            noteType = TYPE_VIDEO;
-                            fileID = message.getVideo().getFileId();
-                        }
-                        if (noteText.startsWith("\n")) noteText = noteText.substring(1);
-                        if (noteType.equals(TYPE_TEXT))
-                            entities = MessageUtilities.entitiesToString(message.getEntities(),
-                                    noteText.length() - message.getText().length());
-                        else {
-                            noteText = message.getCaption().trim().substring(1).substring(command.length()).trim()
-                                    .substring(noteName.length() + 1).trim();
-                            entities = MessageUtilities.entitiesToString(message.getCaptionEntities(),
-                                    noteText.length() - message.getCaption().length());
-                        }
+                        ps = instance.mysql.prepareStatement("INSERT INTO Notes (Text, Type, Entities, FileID, ChatID, Name) VALUES (?, ?, ?, ?,"
+                                + message.getChatId() + ", ?)");
                     }
+                    ps.setString(1, noteText);
+                    ps.setString(2, noteType);
+                    ps.setString(3, entities);
+                    ps.setString(4, fileID);
+                    ps.setString(5, noteName);
+                    ps.executeUpdate();
 
-                    try {
-                        PreparedStatement ps;
-                        if (noteExists(message.getChatId(), noteName)) {
-                            ps = instance.mysql.prepareStatement("UPDATE Notes SET Text = ?, Type = ?, Entities = ?, FileID = ? WHERE ChatID = "
-                                    + message.getChatId() + " AND Name LIKE ? ");
-                        } else {
-                            ps = instance.mysql.prepareStatement("INSERT INTO Notes (Text, Type, Entities, FileID, ChatID, Name) VALUES (?, ?, ?, ?,"
-                                    + message.getChatId() + ", ?)");
-                        }
-                        ps.setString(1, noteText);
-                        ps.setString(2, noteType);
-                        ps.setString(3, entities);
-                        ps.setString(4, fileID);
-                        ps.setString(5, noteName);
-                        ps.executeUpdate();
-
-                        sm = new SendMessage(message.getChatId().toString(), "Note " + noteName + " saved!");
-                        sm.setReplyToMessageId(message.getMessageId());
-                        instance.execute(sm);
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
+                    sm = new SendMessage(message.getChatId().toString(), "Note " + noteName + " saved!");
+                    sm.setReplyToMessageId(message.getMessageId());
+                    instance.execute(sm);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
                 }
                 break;
             case "clear":
                 String text = "Note not found!";
-                if (instance.enforceChatAdmin(message)) {
-                    String noteName = message.getText().trim().split(" ")[1].split("\n")[0];
+                noteName = message.getText().trim().split(" ")[1].split("\n")[0];
 
-                    if (noteExists(message.getChatId(), noteName)) {
-                        try {
-                            PreparedStatement ps = instance.mysql.prepareStatement("DELETE FROM Notes WHERE ChatID ="
-                                    + message.getChatId() + " AND Name LIKE ?");
-                            ps.setString(1, noteName);
-                            ps.executeUpdate();
+                if (noteExists(message.getChatId(), noteName)) {
+                    try {
+                        PreparedStatement ps = instance.mysql.prepareStatement("DELETE FROM Notes WHERE ChatID ="
+                                + message.getChatId() + " AND Name LIKE ?");
+                        ps.setString(1, noteName);
+                        ps.executeUpdate();
 
-                            text = "Removed note " + noteName + "!";
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
+                        text = "Removed note " + noteName + "!";
+                    } catch (SQLException e) {
+                        e.printStackTrace();
                     }
-
-                    sm = new SendMessage(message.getChatId().toString(), text);
-                    sm.setReplyToMessageId(message.getMessageId());
-                    instance.execute(sm);
                 }
+
+                sm = new SendMessage(message.getChatId().toString(), text);
+                sm.setReplyToMessageId(message.getMessageId());
+                instance.execute(sm);
                 break;
             case "get":
-                String noteName = message.getText().trim().split(" ")[0].substring(1).split("\n")[0];
+                noteName = message.getText().trim().split(" ")[0].substring(1).split("\n")[0];
                 text = "Note not found!";
-                String noteType = TYPE_TEXT;
-                String fileID = "";
+                noteType = TYPE_TEXT;
+                fileID = "";
                 if (!message.getText().trim().startsWith("#") || noteName.length() == 0) {
                     if (message.getText().trim().split(" ").length > 1) {
                         noteName = message.getText().trim().split(" ")[1];
@@ -214,7 +233,7 @@ public class NotesCommand extends Command {
                         noteName = "";
                     }
                 }
-                String entities = "";
+                entities = "";
 
                 try {
                     PreparedStatement ps = instance.mysql.prepareStatement("SELECT Type, Text, Entities, FileID FROM Notes WHERE ChatID = "

@@ -13,51 +13,70 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class BanCommand extends Command {
 
     public BanCommand(Linux4Bot instance) {
-        super(instance, "kick", "ban", "unban");
+        super(instance, "ban", "kick", "unban");
+    }
+
+    @Override
+    public Category getCategory() {
+        return Command.CATEGORY_BANS;
+    }
+
+    @Override
+    public HelpInfo getHelpInfo(String command) {
+        switch (command) {
+            case "ban": return new HelpInfo("", "Ban a user\\.");
+            case "kick": return new HelpInfo("", "Kick a user\\.");
+            case "unban": return new HelpInfo("", "Unban a user\\.");
+        }
+
+        return super.getHelpInfo(command);
+    }
+
+    @Override
+    public boolean isUserCommand(String command) {
+        return false;
     }
 
     @Override
     public void execute(String command, Message message) throws TelegramApiException {
-        if (instance.enforceChatAdmin(message)) {
-            boolean isKick = command.equalsIgnoreCase("kick");
-            boolean isUnban = command.equalsIgnoreCase("unban");
-            String text = "User required!";
-            User user = instance.getUserRef(message);
+        boolean isKick = command.equalsIgnoreCase("kick");
+        boolean isUnban = command.equalsIgnoreCase("unban");
+        String text = "User required!";
+        User user = instance.getUserRef(message);
 
-            if (user != null) {
-                text = "Cannot " + (isKick ? "kick" : "ban") + " Admins!";
-                boolean admin = false;
-                GetChatAdministrators admins = GetChatAdministrators.builder().chatId(message.getChatId().toString())
-                        .build();
-                for (ChatMember member : instance.execute(admins)) {
-                    if (member.getUser().getId().equals(user.getId())) {
-                        admin = true;
-                        break;
-                    }
-                }
-
-                if (!admin) {
-                    try {
-                        if (!isUnban) {
-                            BanChatMember ban = BanChatMember.builder().chatId(message.getChatId().toString())
-                                    .userId(user.getId()).untilDate(0).build();
-                            instance.execute(ban);
-                        }
-                        if (isKick || isUnban) {
-                            UnbanChatMember unban = UnbanChatMember.builder().chatId(message.getChatId().toString())
-                                    .userId(user.getId()).build();
-                            instance.execute(unban);
-                        }
-                        text = (isKick ? "Kicked" : (isUnban ? "Unbanned" : "Banned")) + " " + user.getUserName() + "!";
-                    } catch (TelegramApiException ex) {
-                        text = "Failed to " + (isKick ? "kick" : (isUnban ? "unban" : "ban")) + " " + user.getUserName() + "!";
-                    }
+        if (user != null) {
+            text = "Cannot " + (isKick ? "kick" : "ban") + " Admins!";
+            boolean admin = false;
+            GetChatAdministrators admins = GetChatAdministrators.builder().chatId(message.getChatId().toString())
+                    .build();
+            for (ChatMember member : instance.execute(admins)) {
+                if (member.getUser().getId().equals(user.getId())) {
+                    admin = true;
+                    break;
                 }
             }
 
-            SendMessage sm = new SendMessage(message.getChatId().toString(), text);
-            sm.setReplyToMessageId(message.getMessageId());
-            instance.execute(sm);
+            if (!admin) {
+                try {
+                    if (!isUnban) {
+                        BanChatMember ban = BanChatMember.builder().chatId(message.getChatId().toString())
+                                .userId(user.getId()).untilDate(0).build();
+                        instance.execute(ban);
+                    }
+                    if (isKick || isUnban) {
+                        UnbanChatMember unban = UnbanChatMember.builder().chatId(message.getChatId().toString())
+                                .userId(user.getId()).build();
+                        instance.execute(unban);
+                    }
+                    text = (isKick ? "Kicked" : (isUnban ? "Unbanned" : "Banned")) + " " + user.getUserName() + "!";
+                } catch (TelegramApiException ex) {
+                    text = "Failed to " + (isKick ? "kick" : (isUnban ? "unban" : "ban")) + " " + user.getUserName() + "!";
+                }
+            }
         }
+
+        SendMessage sm = new SendMessage(message.getChatId().toString(), text);
+        sm.setReplyToMessageId(message.getMessageId());
+        instance.execute(sm);
     }
 }

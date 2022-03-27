@@ -18,6 +18,28 @@ public class TMuteCommand extends Command {
         super(instance, "tmute", "unmute");
     }
 
+    @Override
+    public Category getCategory() {
+        return Command.CATEGORY_BANS;
+    }
+
+    @Override
+    public HelpInfo getHelpInfo(String command) {
+        switch (command) {
+            case "tmute":
+                return new HelpInfo("", "Temporarily mute a user\\." +
+                        "Example time values: 4m \\= 4 minutes, 3h \\= 3 hours, 6d \\= 6 days, 5w \\= 5 weeks\\.");
+            case "unmute":
+                return new HelpInfo("", "Unmute a user\\.");
+        }
+        return super.getHelpInfo(command);
+    }
+
+    @Override
+    public boolean isUserCommand(String command) {
+        return false;
+    }
+
     private Integer parseDuration(String duration) {
         long time = 1;
         try {
@@ -35,7 +57,8 @@ public class TMuteCommand extends Command {
                     time *= 24;
                 case "h":
                     time *= 60;
-                default: break;
+                default:
+                    break;
             }
         } catch (NumberFormatException ignored) {
 
@@ -45,55 +68,53 @@ public class TMuteCommand extends Command {
 
         Date date = new Date();
         date.setTime(date.getTime() + time);
-        return (int)(date.getTime() / 1000);
+        return (int) (date.getTime() / 1000);
     }
 
     @Override
     public void execute(String command, Message message) throws TelegramApiException {
-        if (instance.enforceChatAdmin(message)) {
-            String text = "User required!";
-            User user = instance.getUserRef(message);
+        String text = "User required!";
+        User user = instance.getUserRef(message);
 
-            if (user != null) {
-                if (command.equalsIgnoreCase("tmute")) {
-                    text = "Cannot mute Admins!";
-                    boolean admin = false;
-                    GetChatAdministrators admins = GetChatAdministrators.builder().chatId(message.getChatId().toString())
-                            .build();
-                    for (ChatMember member : instance.execute(admins)) {
-                        if (member.getUser().getId().equals(user.getId())) {
-                            admin = true;
-                            break;
-                        }
+        if (user != null) {
+            if (command.equalsIgnoreCase("tmute")) {
+                text = "Cannot mute Admins!";
+                boolean admin = false;
+                GetChatAdministrators admins = GetChatAdministrators.builder().chatId(message.getChatId().toString())
+                        .build();
+                for (ChatMember member : instance.execute(admins)) {
+                    if (member.getUser().getId().equals(user.getId())) {
+                        admin = true;
+                        break;
                     }
-
-                    if (!admin) {
-                        text = "Duration required!";
-                        String[] broken = message.getText().trim().split(" ");
-                        if ((message.getReplyToMessage() != null && broken.length > 1) || (broken.length > 2)) {
-                            String duration = message.getReplyToMessage() != null ? broken[1] : broken[2];
-                            Integer dateEnd = parseDuration(duration);
-                            text = "Muted " + user.getUserName() + " until " + new Date((long)dateEnd * 1000) + "!";
-                            RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
-                                    .chatId(message.getChatId().toString())
-                                    .permissions(ChatPermissions.builder().canSendMessages(false)
-                                            .canSendMediaMessages(false).canSendOtherMessages(false).build())
-                                    .untilDate(dateEnd).build();
-                            instance.execute(restrict);
-                        }
-                    }
-                } else { // unmute
-                    text = "Unmuted " + user.getUserName() + "!";
-                    RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
-                            .chatId(message.getChatId().toString())
-                            .permissions(ChatPermissions.builder().build()).build();
-                    instance.execute(restrict);
                 }
-            }
 
-            SendMessage sm = new SendMessage(message.getChatId().toString(), text);
-            sm.setReplyToMessageId(message.getMessageId());
-            instance.execute(sm);
+                if (!admin) {
+                    text = "Duration required!";
+                    String[] broken = message.getText().trim().split(" ");
+                    if ((message.getReplyToMessage() != null && broken.length > 1) || (broken.length > 2)) {
+                        String duration = message.getReplyToMessage() != null ? broken[1] : broken[2];
+                        Integer dateEnd = parseDuration(duration);
+                        text = "Muted " + user.getUserName() + " until " + new Date((long) dateEnd * 1000) + "!";
+                        RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
+                                .chatId(message.getChatId().toString())
+                                .permissions(ChatPermissions.builder().canSendMessages(false)
+                                        .canSendMediaMessages(false).canSendOtherMessages(false).build())
+                                .untilDate(dateEnd).build();
+                        instance.execute(restrict);
+                    }
+                }
+            } else { // unmute
+                text = "Unmuted " + user.getUserName() + "!";
+                RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
+                        .chatId(message.getChatId().toString())
+                        .permissions(ChatPermissions.builder().build()).build();
+                instance.execute(restrict);
+            }
         }
+
+        SendMessage sm = new SendMessage(message.getChatId().toString(), text);
+        sm.setReplyToMessageId(message.getMessageId());
+        instance.execute(sm);
     }
 }

@@ -24,42 +24,55 @@ public class SetRulesCommand extends Command {
     }
 
     @Override
+    public Category getCategory() {
+        return Command.CATEGORY_RULES;
+    }
+
+    @Override
+    public HelpInfo getHelpInfo(String command) {
+        return new HelpInfo("<text>", "Set the rules for this chat\\. Supports markdown, buttons, fillings, etc\\.");
+    }
+
+    @Override
+    public boolean isUserCommand(String command) {
+        return false;
+    }
+
+    @Override
     public void execute(String command, Message message) throws TelegramApiException {
-        if (instance.enforceChatAdmin(message)) {
-            String text = "Rules set!";
-            String[] broken = message.getText().trim().split(" ");
+        String text = "Rules set!";
+        String[] broken = message.getText().trim().split(" ");
+
+        try {
+            instance.mysql.prepareStatement("DELETE FROM Rules WHERE ChatID = " + message.getChatId()).executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (broken.length > 1 || message.getReplyToMessage() != null) {
+            String rules;
+            if (broken.length > 1)
+                rules = Joiner.on(' ').join(Arrays.copyOfRange(broken, 1, broken.length));
+            else
+                rules = message.getReplyToMessage().getText();
 
             try {
-                instance.mysql.prepareStatement("DELETE FROM Rules WHERE ChatID = " + message.getChatId()).executeUpdate();
+                PreparedStatement ps = instance.mysql.prepareStatement("INSERT INTO Rules (ChatID, Text, Entities) VALUES ("
+                        + message.getChatId() + ", ?, ?)");
+                ps.setString(1, rules);
+                if (message.getReplyToMessage() != null)
+                    ps.setString(2, MessageUtilities.entitiesToString(message.getReplyToMessage().getEntities(),
+                            0));
+                else
+                    ps.setString(2, MessageUtilities.entitiesToString(message.getEntities(),
+                            rules.length() - message.getText().length()));
+                ps.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-            if (broken.length > 1 || message.getReplyToMessage() != null) {
-                String rules;
-                if (broken.length > 1)
-                    rules = Joiner.on(' ').join(Arrays.copyOfRange(broken, 1, broken.length));
-                else
-                    rules = message.getReplyToMessage().getText();
-
-                try {
-                    PreparedStatement ps = instance.mysql.prepareStatement("INSERT INTO Rules (ChatID, Text, Entities) VALUES ("
-                            + message.getChatId() + ", ?, ?)");
-                    ps.setString(1, rules);
-                    if (message.getReplyToMessage() != null)
-                        ps.setString(2, MessageUtilities.entitiesToString(message.getReplyToMessage().getEntities(),
-                                0));
-                    else
-                        ps.setString(2, MessageUtilities.entitiesToString(message.getEntities(),
-                                rules.length() - message.getText().length()));
-                    ps.executeUpdate();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            SendMessage sm = new SendMessage(message.getChatId().toString(), text);
-            sm.setReplyToMessageId(message.getMessageId());
-            instance.execute(sm);
         }
+
+        SendMessage sm = new SendMessage(message.getChatId().toString(), text);
+        sm.setReplyToMessageId(message.getMessageId());
+        instance.execute(sm);
     }
 }

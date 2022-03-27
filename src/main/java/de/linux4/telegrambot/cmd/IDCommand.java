@@ -13,6 +13,16 @@ public class IDCommand extends Command {
     }
 
     @Override
+    public Category getCategory() {
+        return Command.CATEGORY_MISC;
+    }
+
+    @Override
+    public HelpInfo getHelpInfo(String command) {
+        return new HelpInfo("", "Get a user's ID\\.");
+    }
+
+    @Override
     public void execute(String command, Message message) throws TelegramApiException {
         String text;
 

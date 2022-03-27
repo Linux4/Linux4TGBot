@@ -4,6 +4,7 @@ import de.linux4.telegrambot.cmd.*;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatMember;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.LeaveChat;
@@ -62,6 +63,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         this.commands.add(new BanCommand(this));
         this.commands.add(new DemoteCommand(this));
+        this.commands.add(new HelpCommand(this));
         this.commands.add(new IDCommand(this));
         this.commands.add(new NotesCommand(this));
         this.commands.add(new PromoteCommand(this));
@@ -153,6 +155,23 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     update.getMessage().getFrom().getUserName());
         }
 
+        if (update.hasCallbackQuery()) {
+            String commandName = update.getCallbackQuery().getData().split("_")[0];
+            for (Command command : commands) {
+                for (String otherCommandName : command.getCommands()) {
+                    if (commandName.equalsIgnoreCase(otherCommandName)) {
+                        try {
+                            command.callback(update.getCallbackQuery());
+                            execute(AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId()).build());
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         if (update.hasMessage() && update.getMessage().hasText()) {
             String firstWord = update.getMessage().getText().trim().split(" ")[0];
             // Only allow help and rules in pm
@@ -185,7 +204,9 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     for (String commandName : command.getCommands()) {
                         if (commandName.equalsIgnoreCase(firstWord.substring(1))) {
                             try {
-                                command.execute(commandName, update.getMessage());
+                                if (command.isUserCommand(commandName) || enforceChatAdmin(update.getMessage())) {
+                                    command.execute(commandName, update.getMessage());
+                                }
                             } catch (TelegramApiException e) {
                                 e.printStackTrace();
                             }
