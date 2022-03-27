@@ -117,8 +117,10 @@ public class Linux4Bot extends TelegramLongPollingBot {
             UserUtilities.setUserName(this, update.getChatMember().getNewChatMember().getUser().getId(),
                     update.getChatMember().getNewChatMember().getUser().getUserName());
 
+            String oldStatus = update.getChatMember().getOldChatMember().getStatus();
             String status = update.getChatMember().getNewChatMember().getStatus();
-            if (status.equalsIgnoreCase("member") || status.equalsIgnoreCase("left")) {
+            if ((status.equalsIgnoreCase("member") && !oldStatus.equalsIgnoreCase("restricted"))
+                    || status.equalsIgnoreCase("left")) {
                 String welcomeMsg = SetWelcomeCommand.getWelcomeMessage(this,
                         update.getChatMember().getChat().getId(), status.equalsIgnoreCase("member"));
 
