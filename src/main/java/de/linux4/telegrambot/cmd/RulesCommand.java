@@ -4,6 +4,7 @@ import de.linux4.telegrambot.Linux4Bot;
 import de.linux4.telegrambot.MessageUtilities;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.EntityType;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -49,20 +50,31 @@ public class RulesCommand extends Command {
                 try {
                     Long chatId = Long.parseLong(command.split("_")[1]);
                     String chatTitle = instance.execute(GetChat.builder().chatId(chatId.toString()).build()).getTitle();
-                    String text = "No rules set for Chat " + chatTitle + "!";
+                    String preText1 = "The rules for ";
+                    String preText2 = chatTitle;
+                    String preText3 = " are:\n\n";
+                    String text = "This chat doesn't seem to have had any rules set yet..."
+                            + "I wouldn't take that as an invitation though.";
                     List<MessageEntity> entities = new ArrayList<>();
+                    entities.add(MessageEntity.builder().type(EntityType.BOLD).offset(0)
+                            .length(preText1.length()).build());
+                    entities.add(MessageEntity.builder().type(EntityType.CODE).offset(preText1.length())
+                            .length(preText2.length()).build());
+                    entities.add(MessageEntity.builder().type(EntityType.BOLD)
+                            .offset(preText1.length() + preText2.length()).length(preText3.length()).build());
                     try {
                         ResultSet rs = instance.mysql.prepareStatement("SELECT Text, Entities FROM Rules WHERE ChatID = " + chatId)
                                 .executeQuery();
                         if (rs.next()) {
                             text = rs.getString("Text");
-                            entities = MessageUtilities.entitiesFromString(rs.getString("Entities"));
+                            entities.addAll(MessageUtilities.entitiesFromString(rs.getString("Entities"),
+                                    preText1.length() + preText2.length() + preText3.length()));
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
 
-                    SendMessage sm = new SendMessage(message.getChatId().toString(), text);
+                    SendMessage sm = new SendMessage(message.getChatId().toString(), preText1 + preText2 + preText3 + text);
                     sm.setReplyToMessageId(message.getMessageId());
                     sm.setEntities(entities);
                     instance.execute(sm);

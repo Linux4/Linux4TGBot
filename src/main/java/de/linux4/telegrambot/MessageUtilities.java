@@ -19,19 +19,25 @@ public class MessageUtilities {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public static List<MessageEntity> entitiesFromString(String entities) {
+    public static List<MessageEntity> entitiesFromString(String entities, int translateOffset) {
         List<MessageEntity> entityList = new ArrayList<>();
         JSONArray array = new JSONArray(entities);
 
         for (Object obj : array) {
             try {
-                entityList.add(OBJECT_MAPPER.readValue(obj.toString(), MessageEntity.class));
+                MessageEntity entity = OBJECT_MAPPER.readValue(obj.toString(), MessageEntity.class);
+                entity.setOffset(entity.getOffset() + translateOffset);
+                entityList.add(entity);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
         }
 
         return entityList;
+    }
+
+    public static List<MessageEntity> entitiesFromString(String entities) {
+        return entitiesFromString(entities, 0);
     }
 
     public static String entitiesToString(List<MessageEntity> entities, int translateOffset) {
