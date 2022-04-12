@@ -82,7 +82,7 @@ public class NotesCommand extends Command {
 
                 try {
                     PreparedStatement ps = instance.mysql.prepareStatement("SELECT Name FROM Notes WHERE ChatID = "
-                            + message.getChatId());
+                            + message.getChatId() + " ORDER BY NAME ASC");
                     ResultSet rs = ps.executeQuery();
 
                     while (rs.next()) {
