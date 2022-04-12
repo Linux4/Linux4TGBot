@@ -55,6 +55,7 @@ public class DemoteCommand extends Command {
                         instance.execute(demote);
                     } catch (TelegramApiException ex) {
                         text = "Failed to demote ";
+                        entities.clear();
                         text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
                     }
                     break;

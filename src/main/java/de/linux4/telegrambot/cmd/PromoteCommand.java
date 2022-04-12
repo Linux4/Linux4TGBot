@@ -44,7 +44,7 @@ public class PromoteCommand extends Command {
         String rank = "";
         String[] broken = message.getText().trim().split(" ");
 
-        if (broken.length > 2 && broken[1].startsWith("@")) {
+        if (broken.length >= 2 && broken[1].startsWith("@")) {
             rank = Joiner.on(' ').join(Arrays.copyOfRange(broken, 2, broken.length));
         } else if (message.getText().trim().split(" ").length > 1) {
             rank = Joiner.on(' ').join(Arrays.copyOfRange(broken, 1, broken.length));
@@ -73,6 +73,7 @@ public class PromoteCommand extends Command {
                 }
             } catch (TelegramApiException ex) {
                 ex.printStackTrace();
+                entities.clear();
                 text = "Failed to promote ";
                 text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
             }
