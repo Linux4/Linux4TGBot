@@ -5,24 +5,31 @@ import java.util.List;
 
 public class Cron extends Thread {
 
-    private final List<CronTask> tasks = new ArrayList<>();
+    protected final List<CronTask> tasks = new ArrayList<>();
 
     @Override
     public void run() {
-        List<CronTask> remove = new ArrayList<>();
+        while (true) {
+            List<CronTask> remove = new ArrayList<>();
 
-        for (CronTask task : tasks) {
-            if (task.when() <= System.currentTimeMillis()) {
-                try {
-                    task.task().run();
-                    remove.add(task);
-                } catch (Exception | Error ex) {
-                    ex.printStackTrace();
+            for (CronTask task : tasks) {
+                if (task.when() <= System.currentTimeMillis()) {
+                    try {
+                        task.task().run();
+                        remove.add(task);
+                    } catch (Exception | Error ex) {
+                        ex.printStackTrace();
+                    }
                 }
             }
-        }
 
-        tasks.removeAll(remove);
+            tasks.removeAll(remove);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
