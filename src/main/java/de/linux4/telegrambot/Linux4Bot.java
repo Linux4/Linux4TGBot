@@ -141,7 +141,12 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     if (welcomeMsg == null) welcomeMsg = "CAPTCHA";
                     List<MessageEntity> entities = new ArrayList<>();
                     String userName = update.getChatMember().getNewChatMember().getUser().getUserName();
-                    if (userName == null) userName = update.getChatMember().getNewChatMember().getUser().getFirstName();
+                    if (userName == null) {
+                        userName = update.getChatMember().getNewChatMember().getUser().getFirstName();
+                        if (update.getChatMember().getNewChatMember().getUser().getLastName() != null) {
+                            userName += " " + update.getChatMember().getNewChatMember().getUser().getLastName();
+                        }
+                    }
                     for (index = welcomeMsg.indexOf("{username}"); index >= 0; index = welcomeMsg.indexOf("{username}", index + 1)) {
                         MessageEntity entity = MessageEntity.builder().type(EntityType.TEXTMENTION)
                                 .user(update.getChatMember().getNewChatMember().getUser())
