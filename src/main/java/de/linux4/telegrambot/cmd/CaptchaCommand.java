@@ -59,7 +59,9 @@ public class CaptchaCommand extends Command {
         long userId = Long.parseLong(query.getData().split("_")[1]);
 
         if (userId == query.getFrom().getId()) {
-            instance.execute(EditMessageText.builder().text(query.getMessage().getText()).entities(query.getMessage().getEntities())
+            instance.execute(EditMessageText.builder().chatId(query.getMessage().getChatId().toString())
+                    .messageId(query.getMessage().getMessageId())
+                    .text(query.getMessage().getText()).entities(query.getMessage().getEntities())
                     .replyMarkup(null).build());
             instance.captcha.remove(userId);
 
