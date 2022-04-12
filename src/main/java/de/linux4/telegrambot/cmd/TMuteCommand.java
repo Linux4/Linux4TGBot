@@ -115,7 +115,8 @@ public class TMuteCommand extends Command {
                 text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
                 RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
                         .chatId(message.getChatId().toString())
-                        .permissions(ChatPermissions.builder().build()).build();
+                        .permissions(ChatPermissions.builder().canSendMessages(true)
+                                .canSendMediaMessages(true).canSendOtherMessages(true).build()).build();
                 instance.execute(restrict);
             }
         }

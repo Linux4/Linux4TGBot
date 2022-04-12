@@ -67,7 +67,8 @@ public class CaptchaCommand extends Command {
 
             RestrictChatMember restrict = RestrictChatMember.builder().userId(userId)
                     .chatId(query.getMessage().getChatId().toString())
-                    .permissions(ChatPermissions.builder().build()).build();
+                    .permissions(ChatPermissions.builder().canSendMessages(true)
+                            .canSendMediaMessages(true).canSendOtherMessages(true).build()).build();
             instance.execute(restrict);
         }
     }
