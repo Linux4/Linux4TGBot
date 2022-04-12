@@ -38,6 +38,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
     private final String botToken;
     public final List<Command> commands = new ArrayList<>();
     public Connection mysql;
+    public Cron cron = new Cron();
 
     public Linux4Bot(String botToken) {
         super(new DefaultBotOptions() {
@@ -72,6 +73,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.commands.add(new SetWelcomeCommand(this));
         this.commands.add(new StartCommand(this));
         this.commands.add(new TMuteCommand(this));
+
+        cron.start();
     }
 
     @Override
