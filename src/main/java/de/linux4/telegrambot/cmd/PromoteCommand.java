@@ -2,14 +2,18 @@ package de.linux4.telegrambot.cmd;
 
 import com.google.common.base.Joiner;
 import de.linux4.telegrambot.Linux4Bot;
+import de.linux4.telegrambot.MessageUtilities;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.PromoteChatMember;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.SetChatAdministratorCustomTitle;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class PromoteCommand extends Command {
 
@@ -35,6 +39,7 @@ public class PromoteCommand extends Command {
     @Override
     public void execute(String command, Message message) throws TelegramApiException {
         User user = instance.getUserRef(message);
+        List<MessageEntity> entities = new ArrayList<>();
         String text = "User required!";
         String rank = "";
         String[] broken = message.getText().trim().split(" ");
@@ -49,7 +54,8 @@ public class PromoteCommand extends Command {
             PromoteChatMember promote = PromoteChatMember.builder().chatId(message.getChatId().toString())
                     .userId(user.getId()).canChangeInformation(true).canDeleteMessages(true)
                     .canRestrictMembers(true).canInviteUsers(true).canPinMessages(true).canManageVoiceChats(true).build();
-            text = "Promoted " + user.getUserName() + "!";
+            text = "Promoted ";
+            text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
             try {
                 if (instance.execute(promote)) {
 
@@ -67,10 +73,12 @@ public class PromoteCommand extends Command {
                 }
             } catch (TelegramApiException ex) {
                 ex.printStackTrace();
-                text = "Failed to promote " + user.getUserName() + "!";
+                text = "Failed to promote ";
+                text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
             }
         }
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
+        sm.setEntities(entities);
         sm.setReplyToMessageId(message.getMessageId());
         instance.execute(sm);
     }

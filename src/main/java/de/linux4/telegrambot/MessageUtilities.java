@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.telegram.telegrambots.meta.api.objects.EntityType;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -99,6 +101,22 @@ public class MessageUtilities {
         }
 
         return null ;
+    }
+
+    public static String mentionUser(List<MessageEntity> entities, User user, int offset) {
+        String name;
+
+        if (user.getUserName() != null) {
+            name = "@" + user.getUserName();
+        } else {
+            name = user.getFirstName();
+            if (user.getLastName() != null) name += " " + user.getLastName();
+        }
+
+        entities.add(MessageEntity.builder().type(EntityType.TEXTMENTION).text(name).offset(offset)
+                .length(name.length()).user(user).build());
+
+        return name;
     }
 
 }

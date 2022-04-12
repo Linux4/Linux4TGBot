@@ -1,16 +1,20 @@
 package de.linux4.telegrambot.cmd;
 
 import de.linux4.telegrambot.Linux4Bot;
+import de.linux4.telegrambot.MessageUtilities;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.RestrictChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.ChatPermissions;
 import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class TMuteCommand extends Command {
 
@@ -74,6 +78,7 @@ public class TMuteCommand extends Command {
     @Override
     public void execute(String command, Message message) throws TelegramApiException {
         String text = "User required!";
+        List<MessageEntity> entities = new ArrayList<>();
         User user = instance.getUserRef(message);
 
         if (user != null) {
@@ -95,7 +100,8 @@ public class TMuteCommand extends Command {
                     if ((message.getReplyToMessage() != null && broken.length > 1) || (broken.length > 2)) {
                         String duration = message.getReplyToMessage() != null ? broken[1] : broken[2];
                         Integer dateEnd = parseDuration(duration);
-                        text = "Muted " + user.getUserName() + " until " + new Date((long) dateEnd * 1000) + "!";
+                        text = "Muted ";
+                        text += MessageUtilities.mentionUser(entities, user, text.length()) + " until " + new Date((long) dateEnd * 1000) + "!";
                         RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
                                 .chatId(message.getChatId().toString())
                                 .permissions(ChatPermissions.builder().canSendMessages(false)
@@ -105,7 +111,8 @@ public class TMuteCommand extends Command {
                     }
                 }
             } else { // unmute
-                text = "Unmuted " + user.getUserName() + "!";
+                text = "Unmuted ";
+                text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
                 RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
                         .chatId(message.getChatId().toString())
                         .permissions(ChatPermissions.builder().build()).build();
@@ -114,6 +121,7 @@ public class TMuteCommand extends Command {
         }
 
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
+        sm.setEntities(entities);
         sm.setReplyToMessageId(message.getMessageId());
         instance.execute(sm);
     }
