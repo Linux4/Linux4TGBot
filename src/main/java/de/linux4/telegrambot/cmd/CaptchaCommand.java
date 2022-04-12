@@ -23,8 +23,8 @@ public class CaptchaCommand extends Command {
 
     @Override
     public HelpInfo getHelpInfo(String command) {
-        return new HelpInfo("<yes/no/on/off>", "All users that join will need to solve a CAPTCHA. " +
-                "This proves they aren't a bot!");
+        return new HelpInfo("<yes/no/on/off>", "All users that join will need to solve a CAPTCHA\\. " +
+                "This proves they aren't a bot\\!");
     }
 
     @Override

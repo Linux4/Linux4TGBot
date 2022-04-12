@@ -19,10 +19,10 @@ public abstract class Command {
     public static final Category CATEGORY_BANS = new Category("Bans", "Some people need to be publicly banned; spammers," +
             " annoyances, or just trolls\\.\n\n" +
             "This module allows you to do that easily, by exposing some common actions, so everyone will see\\!");
-    public static final Category CATEGORY_CAPTCHA = new Category("CAPTCHA", "Some chats get a lot of users joining just to spam. " +
-            "This could be because they're trolls, or part of a spam network.\n" +
-            "To slow them down, you could try enabling CAPTCHAs. " +
-            "New users joining your chat will be required to complete a test to confirm that they're real people.'");
+    public static final Category CATEGORY_CAPTCHA = new Category("CAPTCHA", "Some chats get a lot of users joining just to spam\\. " +
+            "This could be because they're trolls, or part of a spam network\\.\n" +
+            "To slow them down, you could try enabling CAPTCHAs\\. " +
+            "New users joining your chat will be required to complete a test to confirm that they're real people\\.'");
     public static final Category CATEGORY_GREETINGS = new Category("Greetings", "Give your members a warm welcome with the greetings module\\!\n" +
             "Or a sad goodbye\\.\\.\\. Depends\\!");
     public static final Category CATEGORY_NOTES = new Category("Notes", "Save data for future users with notes\\!\n\n" +
