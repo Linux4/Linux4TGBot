@@ -158,6 +158,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     }
                     welcomeMsg = welcomeMsg.replaceAll("\\{username}", userName);
                     welcomeMsg = welcomeMsg.replaceAll("\\{chatname}", update.getChatMember().getChat().getTitle());
+                    welcomeMsg = welcomeMsg.replaceAll("\\{id}",
+                            update.getChatMember().getNewChatMember().getUser().getId().toString());
 
                     InlineKeyboardMarkup captchaKb = null;
                     if (captcha) {
