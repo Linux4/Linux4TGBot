@@ -74,6 +74,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.commands.add(new NotesCommand(this));
         this.commands.add(new PromoteCommand(this));
         this.commands.add(new RulesCommand(this));
+        this.commands.add(new SedCommand(this));
         this.commands.add(new SetRulesCommand(this));
         this.commands.add(new SetWelcomeCommand(this));
         this.commands.add(new StartCommand(this));
@@ -253,6 +254,17 @@ public class Linux4Bot extends TelegramLongPollingBot {
                             e.printStackTrace();
                         }
                         break;
+                    }
+                }
+            } else if (firstWord.startsWith("s/") || firstWord.startsWith("'s/")) {
+                // Sed
+                for (Command command : commands) {
+                    if (command.getCommands().contains("sed")) {
+                        try {
+                            command.execute("sed", update.getMessage());
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             } else if (firstWord.startsWith("/")) {
