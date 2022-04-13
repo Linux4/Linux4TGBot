@@ -23,6 +23,11 @@ public abstract class Command {
             "This could be because they're trolls, or part of a spam network\\.\n" +
             "To slow them down, you could try enabling CAPTCHAs\\. " +
             "New users joining your chat will be required to complete a test to confirm that they're real people\\.'");
+    public static final Category CATEGORY_FILTERS = new Category("Filters", "Make your chat more lively with filters; " +
+            "The bot will reply to certain words\\!\n" +
+            "\n" +
+            "Filters are case sensitive, but you can use regex; every time someone says your trigger words, the bot will reply something else\\! " +
+            "can be used to create your own commands, if desired\\.");
     public static final Category CATEGORY_GREETINGS = new Category("Greetings", "Give your members a warm welcome with the greetings module\\!\n" +
             "Or a sad goodbye\\.\\.\\. Depends\\!");
     public static final Category CATEGORY_NOTES = new Category("Notes", "Save data for future users with notes\\!\n\n" +
@@ -33,7 +38,7 @@ public abstract class Command {
             " this module will help make those rules clearer\\!");
     public static final Category CATEGORY_INVISIBLE = new Category("NoDisplay", "Default (not visible in /help) category\\.");
     public static final List<Category> ALL_CATEGORIES = List.of(CATEGORY_ADMIN, CATEGORY_BANS, CATEGORY_CAPTCHA,
-            CATEGORY_GREETINGS, CATEGORY_NOTES, CATEGORY_MISC, CATEGORY_RULES);
+            CATEGORY_FILTERS, CATEGORY_GREETINGS, CATEGORY_NOTES, CATEGORY_MISC, CATEGORY_RULES);
 
     protected final Linux4Bot instance;
     private final List<String> commands;

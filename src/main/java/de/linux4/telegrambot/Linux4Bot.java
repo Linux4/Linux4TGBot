@@ -69,6 +69,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.commands.add(new BanCommand(this));
         this.commands.add(new CaptchaCommand(this));
         this.commands.add(new DemoteCommand(this));
+        this.commands.add(new FilterCommand(this));
         this.commands.add(new HelpCommand(this));
         this.commands.add(new IDCommand(this));
         this.commands.add(new NotesCommand(this));
@@ -279,6 +280,41 @@ public class Linux4Bot extends TelegramLongPollingBot {
                                 e.printStackTrace();
                             }
                             break;
+                        }
+                    }
+                }
+            } else { // Filters
+                FilterCommand filters = null;
+                for (Command command : commands) {
+                    if (command.getCommands().contains("filter")) {
+                        filters = (FilterCommand) command;
+                        break;
+                    }
+                }
+
+                if (filters != null) {
+                    for (String filterName : filters.getMatchingFilters(update.getMessage().getChatId(), update.getMessage().getText(), false)) {
+                        String filterAction = filters.getFilterAction(update.getMessage().getChatId(), filterName);
+                        SendMessage sm = new SendMessage(update.getMessage().getChatId().toString(), filterAction);
+                        sm.setReplyToMessageId(update.getMessage().getMessageId());
+                        try {
+                            Message reply = execute(sm);
+
+                            if (filterAction.startsWith("/")) {
+                                // is a command
+                                String command = filterAction.split(" ")[0].substring(1);
+
+                                for (Command execute : commands) {
+                                    for (String executeCmd : execute.getCommands()) {
+                                        if (command.equalsIgnoreCase(executeCmd)) {
+                                            execute.execute(executeCmd, reply);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
