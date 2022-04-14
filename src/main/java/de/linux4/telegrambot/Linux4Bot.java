@@ -68,6 +68,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         this.commands.add(new BanCommand(this));
         this.commands.add(new CaptchaCommand(this));
+        this.commands.add(new DeleteCommand(this));
         this.commands.add(new DemoteCommand(this));
         this.commands.add(new FilterCommand(this));
         this.commands.add(new HelpCommand(this));
