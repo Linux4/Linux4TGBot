@@ -18,9 +18,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class Linux4Bot extends TelegramLongPollingBot {
 
@@ -41,7 +41,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
     public final List<Command> commands = new ArrayList<>();
     public Connection mysql;
     public Cron cron = new Cron();
-    public final Set<Long> captcha = new HashSet<>();
+    public final HashMap<Long, HashSet<Long>> captcha = new HashMap<>();
 
     public Linux4Bot(String botToken) {
         super(new DefaultBotOptions() {
@@ -126,49 +126,56 @@ public class Linux4Bot extends TelegramLongPollingBot {
         } catch (TelegramApiException ignored) {
         }
 
-        if (update.hasChatMember()) {
-            UserUtilities.setUserName(this, update.getChatMember().getNewChatMember().getUser().getId(),
-                    update.getChatMember().getNewChatMember().getUser().getUserName());
+        if (update.hasMessage() && (update.getMessage().getNewChatMembers() != null || update.getMessage().getLeftChatMember() != null)) {
+            boolean join = update.getMessage().getLeftChatMember() == null;
+            List<User> users = new ArrayList<>();
+            if (join)
+                users.addAll(update.getMessage().getNewChatMembers());
+            else
+                users.add(update.getMessage().getLeftChatMember());
 
-            String oldStatus = update.getChatMember().getOldChatMember().getStatus();
-            String status = update.getChatMember().getNewChatMember().getStatus();
-            if ((status.equalsIgnoreCase("member") && (!oldStatus.equalsIgnoreCase("restricted")
-                    && !oldStatus.equalsIgnoreCase("administrator")))
-                    || status.equalsIgnoreCase("left")) {
+            for (User user : users) {
+                UserUtilities.setUserName(this, user.getId(), user.getUserName());
+
+                try {
+                    if (user.getId().equals(this.getMe().getId()))
+                        continue;
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+
                 String welcomeMsg = SetWelcomeCommand.getWelcomeMessage(this,
-                        update.getChatMember().getChat().getId(), status.equalsIgnoreCase("member"));
-                boolean captcha = Settings.getSettingBool(this, update.getChatMember().getChat().getId(),
+                        update.getMessage().getChatId(), join);
+                boolean captcha = Settings.getSettingBool(this, update.getMessage().getChatId(),
                         Settings.KEY_CAPTCHA, false);
 
-                if (welcomeMsg != null || (status.equalsIgnoreCase("member") && captcha)) {
+                if (welcomeMsg != null || (join && captcha)) {
                     int index = 0;
                     if (welcomeMsg == null) welcomeMsg = "CAPTCHA";
                     List<MessageEntity> entities = new ArrayList<>();
-                    String userName = update.getChatMember().getNewChatMember().getUser().getUserName();
+                    String userName = user.getUserName();
                     if (userName == null) {
-                        userName = update.getChatMember().getNewChatMember().getUser().getFirstName();
-                        if (update.getChatMember().getNewChatMember().getUser().getLastName() != null) {
-                            userName += " " + update.getChatMember().getNewChatMember().getUser().getLastName();
+                        userName = user.getFirstName();
+                        if (user.getLastName() != null) {
+                            userName += " " + user.getLastName();
                         }
                     }
                     for (index = welcomeMsg.indexOf("{username}"); index >= 0; index = welcomeMsg.indexOf("{username}", index + 1)) {
                         MessageEntity entity = MessageEntity.builder().type(EntityType.TEXTMENTION)
-                                .user(update.getChatMember().getNewChatMember().getUser())
+                                .user(user)
                                 .offset(index + (entities.size() * userName.length() + (entities.size() > 0 ? 1 : 0))
                                         - (entities.size() * "{username}".length()))
                                 .length(userName.length()).build();
                         entities.add(entity);
                     }
                     welcomeMsg = welcomeMsg.replaceAll("\\{username}", userName);
-                    welcomeMsg = welcomeMsg.replaceAll("\\{chatname}", update.getChatMember().getChat().getTitle());
-                    welcomeMsg = welcomeMsg.replaceAll("\\{id}",
-                            update.getChatMember().getNewChatMember().getUser().getId().toString());
+                    welcomeMsg = welcomeMsg.replaceAll("\\{chatname}", update.getMessage().getChat().getTitle());
+                    welcomeMsg = welcomeMsg.replaceAll("\\{id}", user.getId().toString());
 
                     InlineKeyboardMarkup captchaKb = null;
                     if (captcha) {
-                        RestrictChatMember restrict = RestrictChatMember.builder().userId(update.getChatMember()
-                                        .getNewChatMember().getUser().getId())
-                                .chatId(update.getChatMember().getChat().getId().toString())
+                        RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
+                                .chatId(update.getMessage().getChatId().toString())
                                 .permissions(ChatPermissions.builder().canSendMessages(false)
                                         .canSendMediaMessages(false).canSendOtherMessages(false).build()).build();
                         try {
@@ -176,30 +183,35 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         } catch (TelegramApiException e) {
                             e.printStackTrace();
                         }
-                        this.captcha.add(update.getChatMember().getNewChatMember().getUser().getId());
+                        if (!this.captcha.containsKey(update.getMessage().getChatId()))
+                            this.captcha.put(update.getMessage().getChatId(), new HashSet<>());
+                        this.captcha.get(update.getMessage().getChatId()).add(user.getId());
                         cron.tasks.add(new CronTask(System.currentTimeMillis() + 5 * 60 * 1000, () -> {
-                            if (Linux4Bot.this.captcha.contains(update.getChatMember().getNewChatMember().getUser().getId())) {
+                            if (Linux4Bot.this.captcha.containsKey(update.getMessage().getChatId()) &&
+                                    Linux4Bot.this.captcha.get(update.getMessage().getChatId()).contains(user.getId())) {
                                 // Kick the user for inactivity after 5 minutes
                                 try {
-                                    BanChatMember ban = BanChatMember.builder().chatId(update.getChatMember().getChat().getId().toString())
-                                            .userId(update.getChatMember().getNewChatMember().getUser().getId()).build();
+                                    BanChatMember ban = BanChatMember.builder().chatId(update.getMessage().getChatId().toString())
+                                            .userId(user.getId()).build();
                                     Linux4Bot.this.execute(ban);
                                     UnbanChatMember unban = UnbanChatMember.builder().chatId(ban.getChatId()).userId(ban.getUserId()).build();
                                     Linux4Bot.this.execute(unban);
                                 } catch (TelegramApiException e) {
                                     e.printStackTrace();
                                 }
+                                Linux4Bot.this.captcha.get(update.getMessage().getChatId()).remove(user.getId());
+                                if (Linux4Bot.this.captcha.get(update.getMessage().getChatId()).size() == 0)
+                                    Linux4Bot.this.captcha.remove(update.getMessage().getChatId());
                             }
-                            Linux4Bot.this.captcha.remove(update.getChatMember().getNewChatMember().getUser().getId());
                         }));
 
                         captchaKb = InlineKeyboardMarkup.builder().keyboardRow(
-                                List.of(InlineKeyboardButton.builder().callbackData("captcha_" + update.getChatMember()
-                                        .getNewChatMember().getUser().getId()).text("Click here to prove you're human").build())
+                                List.of(InlineKeyboardButton.builder().callbackData("captcha_" + user.getId())
+                                        .text("Click here to prove you're human").build())
                         ).build();
                     }
 
-                    SendMessage sm = new SendMessage(update.getChatMember().getChat().getId().toString(), welcomeMsg);
+                    SendMessage sm = new SendMessage(update.getMessage().getChatId().toString(), welcomeMsg);
                     sm.setEntities(entities);
                     sm.setReplyMarkup(captchaKb);
                     try {
@@ -209,7 +221,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     }
                 }
             }
-        } else if (update.hasMessage()) {
+        }
+        if (update.hasMessage()) {
             UserUtilities.setUserName(this, update.getMessage().getFrom().getId(),
                     update.getMessage().getFrom().getUserName());
         }

@@ -63,7 +63,9 @@ public class CaptchaCommand extends Command {
                     .messageId(query.getMessage().getMessageId())
                     .text(query.getMessage().getText()).entities(query.getMessage().getEntities())
                     .replyMarkup(null).build());
-            instance.captcha.remove(userId);
+            instance.captcha.get(query.getMessage().getChatId()).remove(userId);
+            if (instance.captcha.get(query.getMessage().getChatId()).size() == 0)
+                instance.captcha.remove(query.getMessage().getChatId());
 
             RestrictChatMember restrict = RestrictChatMember.builder().userId(userId)
                     .chatId(query.getMessage().getChatId().toString())
