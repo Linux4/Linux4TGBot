@@ -44,12 +44,12 @@ public class TMuteCommand extends Command {
         return false;
     }
 
-    private Integer parseDuration(String duration) {
+    private static Integer parseDuration(String duration) {
         long time = 1;
         try {
             time = Integer.parseInt(duration.substring(0, Math.max(1, duration.length() - 1)));
             String timeUnit = "m";
-            if (duration.length() > 1) timeUnit = duration.substring(1, 2);
+            if (duration.length() > 1) timeUnit = duration.substring(duration.length() - 1);
 
             switch (timeUnit) {
                 case "Y":
