@@ -7,6 +7,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.*;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -174,15 +175,6 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
                     InlineKeyboardMarkup captchaKb = null;
                     if (captcha) {
-                        RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
-                                .chatId(update.getMessage().getChatId().toString())
-                                .permissions(ChatPermissions.builder().canSendMessages(false)
-                                        .canSendMediaMessages(false).canSendOtherMessages(false).build()).build();
-                        try {
-                            execute(restrict);
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                        }
                         if (!this.captcha.containsKey(update.getMessage().getChatId()))
                             this.captcha.put(update.getMessage().getChatId(), new HashSet<>());
                         this.captcha.get(update.getMessage().getChatId()).add(user.getId());
@@ -225,6 +217,19 @@ public class Linux4Bot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             UserUtilities.setUserName(this, update.getMessage().getFrom().getId(),
                     update.getMessage().getFrom().getUserName());
+
+            // Captcha check
+            if (captcha.containsKey(update.getMessage().getChatId()) &&
+                    captcha.get(update.getMessage().getChatId()).contains(update.getMessage().getFrom().getId())) {
+                // Delete message
+                DeleteMessage dm = DeleteMessage.builder().messageId(update.getMessage().getMessageId())
+                        .chatId(String.valueOf(update.getMessage().getChatId())).build();
+                try {
+                    execute(dm);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         if (update.hasCallbackQuery()) {

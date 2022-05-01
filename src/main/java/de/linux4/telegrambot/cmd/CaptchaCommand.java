@@ -66,12 +66,6 @@ public class CaptchaCommand extends Command {
             instance.captcha.get(query.getMessage().getChatId()).remove(userId);
             if (instance.captcha.get(query.getMessage().getChatId()).size() == 0)
                 instance.captcha.remove(query.getMessage().getChatId());
-
-            RestrictChatMember restrict = RestrictChatMember.builder().userId(userId)
-                    .chatId(query.getMessage().getChatId().toString())
-                    .permissions(ChatPermissions.builder().canSendMessages(true)
-                            .canSendMediaMessages(true).canSendOtherMessages(true).build()).build();
-            instance.execute(restrict);
         }
     }
 }
