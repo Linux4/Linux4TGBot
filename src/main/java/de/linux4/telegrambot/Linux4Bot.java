@@ -103,6 +103,17 @@ public class Linux4Bot extends TelegramLongPollingBot {
             return;
         }
 
+        // Ban premium stickers
+        if (update.hasMessage() && update.getMessage().hasSticker() && update.getMessage().getSticker().getPremiumAnimation() != null) {
+            DeleteMessage dm = DeleteMessage.builder().chatId(update.getMessage().getChatId()).messageId(update.getMessage().getMessageId())
+                    .build();
+            try {
+                execute(dm);
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         // Check if this is an allowed group
         try {
             if (update.hasMyChatMember() && !update.getMyChatMember().getChat().isUserChat()) {

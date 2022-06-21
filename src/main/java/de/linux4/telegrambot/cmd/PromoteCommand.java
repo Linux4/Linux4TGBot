@@ -53,7 +53,8 @@ public class PromoteCommand extends Command {
         if (user != null) {
             PromoteChatMember promote = PromoteChatMember.builder().chatId(message.getChatId().toString())
                     .userId(user.getId()).canChangeInformation(true).canDeleteMessages(true)
-                    .canRestrictMembers(true).canInviteUsers(true).canPinMessages(true).canManageVoiceChats(true).build();
+                    .canRestrictMembers(true).canInviteUsers(true).canPinMessages(true).canManageChat(true)
+                    .canManageVideoChats(true).build();
             text = "Promoted ";
             text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
             try {

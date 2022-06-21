@@ -1,7 +1,6 @@
 package de.linux4.telegrambot.cmd;
 
 import de.linux4.telegrambot.Linux4Bot;
-import org.checkerframework.checker.formatter.FormatUtil;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
