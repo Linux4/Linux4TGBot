@@ -121,8 +121,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 GetChatAdministrators administrators = GetChatAdministrators.builder()
                         .chatId(update.getMyChatMember().getChat().getId().toString()).build();
                 for (ChatMember admin : execute(administrators)) {
-                    if (admin.getUser().getUserName().equalsIgnoreCase(getMe().getUserName()
-                            .substring(0, getMe().getUserName().length() - "bot".length()))) {
+                    if (getMe().getUserName()
+                            .substring(0, getMe().getUserName().length() - "bot".length()).equalsIgnoreCase(admin.getUser().getUserName())) {
                         allowed = true;
                         break;
                     }
