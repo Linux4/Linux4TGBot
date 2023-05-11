@@ -57,10 +57,11 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.botToken = botToken;
 
         try {
-            mysql = DriverManager.getConnection("jdbc:mysql://localhost:3306/linux4tgbot?autoReconnect=true&useUnicode=true"
+            Class.forName("org.mariadb.jdbc.Driver");
+            mysql = DriverManager.getConnection("jdbc:mariadb://localhost:3306/linux4tgbot?autoReconnect=true&useUnicode=true"
                             + "&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
                     "linux4", "linux4!");
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
 

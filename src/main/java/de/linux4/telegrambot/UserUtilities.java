@@ -1,7 +1,5 @@
 package de.linux4.telegrambot;
 
-import com.mysql.cj.protocol.ResultStreamer;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
