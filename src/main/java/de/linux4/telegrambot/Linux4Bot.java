@@ -56,14 +56,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
         });
         this.botToken = botToken;
 
-        try {
-            Class.forName("org.mariadb.jdbc.Driver");
-            mysql = DriverManager.getConnection("jdbc:mariadb://localhost:3306/linux4tgbot?autoReconnect=true&useUnicode=true"
-                            + "&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
-                    "linux4", "linux4!");
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        connect();
 
         Settings.init(this);
         UserUtilities.init(this);
@@ -87,6 +80,17 @@ public class Linux4Bot extends TelegramLongPollingBot {
         cron.start();
     }
 
+    private void connect() {
+        try {
+            Class.forName("org.mariadb.jdbc.Driver");
+            mysql = DriverManager.getConnection("jdbc:mariadb://localhost:3306/linux4tgbot?autoReconnect=true&useUnicode=true"
+                            + "&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
+                    "linux4", "linux4!");
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public String getBotUsername() {
         return "Linux4Bot";
@@ -102,6 +106,15 @@ public class Linux4Bot extends TelegramLongPollingBot {
         if (mysql == null) {
             System.err.println("Database not connected!");
             return;
+        }
+
+        try {
+            if (!mysql.isValid(3000)) {
+                connect();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            connect();
         }
 
         // Ban premium stickers
