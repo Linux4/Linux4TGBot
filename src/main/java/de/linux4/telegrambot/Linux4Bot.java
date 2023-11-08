@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -43,6 +44,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
     public Connection mysql;
     public Cron cron = new Cron();
     public final HashMap<Long, HashSet<Long>> captcha = new HashMap<>();
+    public final GPT4All gpt4All;
 
     public Linux4Bot(String botToken) {
         super(new DefaultBotOptions() {
@@ -61,6 +63,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
         Settings.init(this);
         UserUtilities.init(this);
 
+        this.commands.add(new AskCommand(this));
         this.commands.add(new BanCommand(this));
         this.commands.add(new CaptchaCommand(this));
         this.commands.add(new DeleteCommand(this));
@@ -78,6 +81,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
         this.commands.add(new TMuteCommand(this));
 
         cron.start();
+
+        gpt4All = new GPT4All(Path.of(".", "gpt4all-model.gguf"));
     }
 
     private void connect() {
