@@ -43,7 +43,7 @@ public class AskCommand extends Command {
         int editId = instance.execute(sm).getMessageId();
 
         if (message.hasText()) {
-            text = instance.gpt4All.sendMessage(message.getText());
+            text = instance.gpt4All.sendMessage(message.getText().substring("/".length() + command.length()));
             if (text == null || text.isEmpty()) {
                 text = "(Empty response from GPT4All)";
             }

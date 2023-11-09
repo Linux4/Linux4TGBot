@@ -4,8 +4,6 @@ import com.hexadevlabs.gpt4all.LLModel;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
 
 public class GPT4All {
 
@@ -26,7 +24,7 @@ public class GPT4All {
             return "Model is not provided, GPT4All extension isn't available!";
         }
 
-        return model.generate(prompt, config, true);
+        return model.generate(prompt, config, false);
     }
 
     public boolean isAvailable() {
