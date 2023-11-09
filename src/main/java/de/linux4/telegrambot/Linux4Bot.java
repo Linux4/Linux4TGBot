@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import static de.linux4.telegrambot.TelegramConstants.COMMAND_PREFIX;
+
 public class Linux4Bot extends TelegramLongPollingBot {
 
     public static void main(String[] args) {
@@ -82,7 +84,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         cron.start();
 
-        gpt4All = new GPT4All(Path.of(".", "gpt4all-model.gguf"));
+        gpt4All = new GPT4All(this, Path.of(".", "gpt4all-model.gguf"));
+        gpt4All.start();
     }
 
     private void connect() {
@@ -282,8 +285,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String firstWord = update.getMessage().getText().trim().split(" ")[0];
             // Only allow help and rules in pm
-            if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase("/help")
-                    && !firstWord.equalsIgnoreCase("/start") && !firstWord.equalsIgnoreCase("/id"))
+            if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase(COMMAND_PREFIX +"help")
+                    && !firstWord.equalsIgnoreCase(COMMAND_PREFIX + "start") && !firstWord.equalsIgnoreCase(COMMAND_PREFIX + "id"))
                 return;
 
             try {
@@ -317,7 +320,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         }
                     }
                 }
-            } else if (firstWord.startsWith("/")) {
+            } else if (firstWord.startsWith(COMMAND_PREFIX)) {
                 for (Command command : commands) {
                     for (String commandName : command.getCommands()) {
                         if (commandName.equalsIgnoreCase(firstWord.substring(1))) {
@@ -349,7 +352,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         try {
                             Message reply = execute(sm);
 
-                            if (filterAction.startsWith("/")) {
+                            if (filterAction.startsWith(COMMAND_PREFIX)) {
                                 // is a command
                                 String command = filterAction.split(" ")[0].substring(1);
 
