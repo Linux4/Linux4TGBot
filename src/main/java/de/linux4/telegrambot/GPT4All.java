@@ -86,44 +86,48 @@ public class GPT4All {
                 Request request = queue.poll();
 
                 if (request != null) {
-                    Message message = request.message;
-                    String command = request.command;
+                    try {
+                        Message message = request.message;
+                        String command = request.command;
 
-                    SendMessage sm = new SendMessage(message.getChatId().toString(), "Thinking...");
-                    sm.setReplyToMessageId(message.getMessageId());
-                    int editId = instance.execute(sm).getMessageId();
+                        SendMessage sm = new SendMessage(message.getChatId().toString(), "Thinking...");
+                        sm.setReplyToMessageId(message.getMessageId());
+                        int editId = instance.execute(sm).getMessageId();
 
-                    String prompt = message.getText();
-                    if (command != null && !command.isEmpty())
-                        prompt = prompt.substring(COMMAND_PREFIX.length() + command.length());
+                        String prompt = message.getText();
+                        if (command != null && !command.isEmpty())
+                            prompt = prompt.substring(COMMAND_PREFIX.length() + command.length());
 
-                    String repl = instance.gpt4All.sendMessage(prompt);
-                    if (repl == null || repl.isEmpty()) {
-                        repl = "(Empty response from GPT4All)";
-                    }
-
-                    boolean first = true;
-                    for (String part : Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(repl)) {
-                        if (first) {
-                            EditMessageText em = new EditMessageText(part);
-                            em.setChatId(message.getChatId().toString());
-                            em.setMessageId(editId);
-                            em.enableMarkdown(true);
-                            instance.execute(em);
-
-                            first = false;
-                        } else {
-                            SendMessage msg = new SendMessage(message.getChatId().toString(), repl);
-                            msg.setReplyToMessageId(editId);
-                            msg.enableMarkdown(true);
-                            editId = instance.execute(sm).getMessageId();
+                        String repl = instance.gpt4All.sendMessage(prompt);
+                        if (repl == null || repl.isEmpty()) {
+                            repl = "(Empty response from GPT4All)";
                         }
+
+                        boolean first = true;
+                        for (String part : Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(repl)) {
+                            if (first) {
+                                EditMessageText em = new EditMessageText(part);
+                                em.setChatId(message.getChatId().toString());
+                                em.setMessageId(editId);
+                                em.enableMarkdown(true);
+                                instance.execute(em);
+
+                                first = false;
+                            } else {
+                                SendMessage msg = new SendMessage(message.getChatId().toString(), repl);
+                                msg.setReplyToMessageId(editId);
+                                msg.enableMarkdown(true);
+                                editId = instance.execute(sm).getMessageId();
+                            }
+                        }
+                    } catch (TelegramApiException ex) {
+                        ex.printStackTrace();
                     }
                 }
 
                 Thread.sleep(100);
             }
-        } catch (InterruptedException | TelegramApiException ex) {
+        } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
     }
