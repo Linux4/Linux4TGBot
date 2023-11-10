@@ -41,7 +41,14 @@ public class GPT4All {
     }
 
     private String generateInstructions() {
-        return "You are a helpful assistant";
+        String instructions = "You are a helpful assistant.";
+        try {
+            instructions += "Your name is " + instance.getMe().getFirstName() + ".";
+        } catch (TelegramApiException ex) {
+            ex.printStackTrace();
+        }
+
+        return instructions;
     }
 
     public String sendMessage(String message) {
