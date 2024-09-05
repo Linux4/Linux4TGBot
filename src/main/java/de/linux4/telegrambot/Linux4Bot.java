@@ -282,8 +282,16 @@ public class Linux4Bot extends TelegramLongPollingBot {
             }
         }
 
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            String firstWord = update.getMessage().getText().trim().split(" ")[0];
+        if (update.hasMessage() && (update.getMessage().hasText() || update.getMessage().getCaption() != null)) {
+            String text;
+            boolean onlyCaption = false;
+            if (update.getMessage().hasText()) {
+                text = update.getMessage().getText();
+            } else {
+                text = update.getMessage().getCaption();
+                onlyCaption = true;
+            }
+            String firstWord = text.trim().split(" ")[0];
             // Only allow help and rules in pm
             if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase(COMMAND_PREFIX +"help")
                     && !firstWord.equalsIgnoreCase(COMMAND_PREFIX + "start") && !firstWord.equalsIgnoreCase(COMMAND_PREFIX + "id"))
@@ -297,7 +305,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
 
-            if (firstWord.startsWith("#")) {
+            if (firstWord.startsWith("#") && !onlyCaption) {
                 // is a Note
                 for (Command command : commands) {
                     if (command.getCommands().contains("notes")) {
@@ -309,7 +317,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         break;
                     }
                 }
-            } else if (firstWord.startsWith("s/") || firstWord.startsWith("'s/")) {
+            } else if (firstWord.startsWith("s/") || firstWord.startsWith("'s/") && !onlyCaption) {
                 // Sed
                 for (Command command : commands) {
                     if (command.getCommands().contains("sed")) {
@@ -320,7 +328,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         }
                     }
                 }
-            } else if (firstWord.startsWith(COMMAND_PREFIX)) {
+            } else if (firstWord.startsWith(COMMAND_PREFIX) && !onlyCaption) {
                 for (Command command : commands) {
                     for (String commandName : command.getCommands()) {
                         if (commandName.equalsIgnoreCase(firstWord.substring(1))) {
@@ -345,7 +353,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 }
 
                 if (filters != null) {
-                    for (String filterName : filters.getMatchingFilters(update.getMessage().getChatId(), update.getMessage().getText(), false)) {
+                    for (String filterName : filters.getMatchingFilters(update.getMessage().getChatId(), text, false)) {
                         String filterAction = filters.getFilterAction(update.getMessage().getChatId(), filterName);
                         SendMessage sm = new SendMessage(update.getMessage().getChatId().toString(), filterAction);
                         sm.setReplyToMessageId(update.getMessage().getMessageId());
