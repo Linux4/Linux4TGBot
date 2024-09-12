@@ -282,15 +282,27 @@ public class Linux4Bot extends TelegramLongPollingBot {
             }
         }
 
-        if (update.hasMessage() && (update.getMessage().hasText() || update.getMessage().getCaption() != null)) {
-            String text;
-            boolean onlyCaption = false;
+        if (update.hasMessage() && (update.getMessage().hasText() || update.getMessage().getCaption() != null
+                || update.getMessage().hasReplyMarkup())) {
+            StringBuilder textBuilder = new StringBuilder();
+            boolean noPlainText = false;
             if (update.getMessage().hasText()) {
-                text = update.getMessage().getText();
+                textBuilder.append(update.getMessage().getText());
             } else {
-                text = update.getMessage().getCaption();
-                onlyCaption = true;
+                if (update.getMessage().getCaption() != null) {
+                    textBuilder.append(update.getMessage().getCaption());
+                }
+                noPlainText = true;
             }
+            // Append all reply markup texts
+            if (update.getMessage().getReplyMarkup() != null) {
+                for (List<InlineKeyboardButton> keyboard : update.getMessage().getReplyMarkup().getKeyboard()) {
+                    for (InlineKeyboardButton button : keyboard) {
+                        textBuilder.append(' ').append(button.getText()).append(' ').append(button.getUrl());
+                    }
+                }
+            }
+            String text = textBuilder.toString();
             String firstWord = text.trim().split(" ")[0];
             // Only allow help and rules in pm
             if (update.getMessage().isUserMessage() && !firstWord.equalsIgnoreCase(COMMAND_PREFIX +"help")
@@ -305,7 +317,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
 
-            if (firstWord.startsWith("#") && !onlyCaption) {
+            if (firstWord.startsWith("#") && !noPlainText) {
                 // is a Note
                 for (Command command : commands) {
                     if (command.getCommands().contains("notes")) {
@@ -317,7 +329,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         break;
                     }
                 }
-            } else if (firstWord.startsWith("s/") || firstWord.startsWith("'s/") && !onlyCaption) {
+            } else if (firstWord.startsWith("s/") || firstWord.startsWith("'s/") && !noPlainText) {
                 // Sed
                 for (Command command : commands) {
                     if (command.getCommands().contains("sed")) {
@@ -328,7 +340,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         }
                     }
                 }
-            } else if (firstWord.startsWith(COMMAND_PREFIX) && !onlyCaption) {
+            } else if (firstWord.startsWith(COMMAND_PREFIX) && !noPlainText) {
                 for (Command command : commands) {
                     for (String commandName : command.getCommands()) {
                         if (commandName.equalsIgnoreCase(firstWord.substring(1))) {
