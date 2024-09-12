@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -29,26 +30,24 @@ import static de.linux4.telegrambot.TelegramConstants.COMMAND_PREFIX;
 public class Linux4Bot extends TelegramLongPollingBot {
 
     public static void main(String[] args) {
-        if (args.length == 1) {
-            try {
-                TelegramBotsApi botApi = new TelegramBotsApi(DefaultBotSession.class);
-                botApi.registerBot(new Linux4Bot(args[0]));
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        } else {
-            System.err.println("Usage: java -jar Linux4TGBot.jar <bot token>");
+        try {
+            Config config = Config.loadFromFile(new java.io.File("settings.json"));
+
+            TelegramBotsApi botApi = new TelegramBotsApi(DefaultBotSession.class);
+            botApi.registerBot(new Linux4Bot(config));
+        } catch (TelegramApiException | IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private final String botToken;
+    private final Config config;
     public final List<Command> commands = new ArrayList<>();
     public Connection mysql;
     public Cron cron = new Cron();
     public final HashMap<Long, HashSet<Long>> captcha = new HashMap<>();
     public final GPT4All gpt4All;
 
-    public Linux4Bot(String botToken) {
+    public Linux4Bot(Config config) {
         super(new DefaultBotOptions() {
             @Override
             public List<String> getAllowedUpdates() {
@@ -58,14 +57,14 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         "poll_answer", "my_chat_member", "chat_member", "chat_join_request");
             }
         });
-        this.botToken = botToken;
+
+        this.config = config;
 
         connect();
 
         Settings.init(this);
         UserUtilities.init(this);
 
-        this.commands.add(new AskCommand(this));
         this.commands.add(new BanCommand(this));
         this.commands.add(new CaptchaCommand(this));
         this.commands.add(new DeleteCommand(this));
@@ -84,16 +83,23 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         cron.start();
 
-        gpt4All = new GPT4All(this, Path.of(".", "gpt4all-model.gguf"));
-        gpt4All.start();
+        if (config.gpt4AllModel != null && !config.gpt4AllModel.isEmpty()) {
+            this.commands.add(new AskCommand(this));
+
+            gpt4All = new GPT4All(this, Path.of(".", config.gpt4AllModel));
+            gpt4All.start();
+        } else {
+            gpt4All = null;
+        }
     }
 
     private void connect() {
         try {
             Class.forName("org.mariadb.jdbc.Driver");
-            mysql = DriverManager.getConnection("jdbc:mariadb://10.2.0.1:3306/linux4tgbot?autoReconnect=true&useUnicode=true"
+            mysql = DriverManager.getConnection("jdbc:mariadb://" + config.mariaDbHost + ":" + config.mariaDbPort +
+                            "/" + config.mariaDbDatabase + "?autoReconnect=true&useUnicode=true"
                             + "&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
-                    "linux4", "linux4!");
+                    config.mariaDbUserName, config.mariaDbPassword);
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -101,12 +107,12 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "Linux4Bot";
+        return config.botUserName;
     }
 
     @Override
     public String getBotToken() {
-        return botToken;
+        return config.botToken;
     }
 
     @Override
@@ -138,13 +144,13 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         // Check if this is an allowed group
         try {
-            if (update.hasMyChatMember() && !update.getMyChatMember().getChat().isUserChat()) {
+            if (config.ownerUserName != null && !config.ownerUserName.isEmpty() && update.hasMyChatMember()
+                    && !update.getMyChatMember().getChat().isUserChat()) {
                 boolean allowed = false;
                 GetChatAdministrators administrators = GetChatAdministrators.builder()
                         .chatId(update.getMyChatMember().getChat().getId().toString()).build();
                 for (ChatMember admin : execute(administrators)) {
-                    if (getMe().getUserName()
-                            .substring(0, getMe().getUserName().length() - "bot".length()).equalsIgnoreCase(admin.getUser().getUserName())) {
+                    if (config.ownerUserName.equalsIgnoreCase(admin.getUser().getUserName())) {
                         allowed = true;
                         break;
                     }

@@ -1,0 +1,11 @@
+{
+   "BotToken":"REPLACEME",
+   "BotUserName":"Linux4Bot",
+   "OwnerUserName":"Linux4",
+   "MariaDBHost":"10.2.0.1",
+   "MariaDBPort":3306,
+   "MariaDBDatabase":"linux4tgbot",
+   "MariaDBUserName":"linux4",
+   "MariaDBPassword":"linux4!",
+   "GPT4AllModel":"gpt4all-model.gguf"
+}
