@@ -4,8 +4,8 @@ import de.linux4.telegrambot.Linux4Bot;
 import de.linux4.telegrambot.MessageUtilities;
 import org.telegram.telegrambots.meta.api.methods.send.*;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -96,19 +96,19 @@ public class NotesCommand extends Command {
                 SendMessage sm = new SendMessage(message.getChatId().toString(), response.toString());
                 sm.setParseMode("HTML");
                 sm.setReplyToMessageId(message.getMessageId());
-                instance.execute(sm);
+                instance.telegramClient.execute(sm);
                 break;
             case "save":
                 if (message.getText().trim().split(" ").length == 1) {
                     sm = new SendMessage(message.getChatId().toString(), "Name required!");
                     sm.setReplyToMessageId(message.getMessageId());
-                    instance.execute(sm);
+                    instance.telegramClient.execute(sm);
                     return;
                 } else if (message.getText().trim().split(" ").length == 2 && message.getReplyToMessage() == null) {
                     sm = new SendMessage(message.getChatId().toString(), "Text required!");
                     sm.setReplyToMessageId(message.getMessageId());
                     ;
-                    instance.execute(sm);
+                    instance.telegramClient.execute(sm);
                     return;
                 }
 
@@ -194,7 +194,7 @@ public class NotesCommand extends Command {
 
                     sm = new SendMessage(message.getChatId().toString(), "Note " + noteName + " saved!");
                     sm.setReplyToMessageId(message.getMessageId());
-                    instance.execute(sm);
+                    instance.telegramClient.execute(sm);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -218,7 +218,7 @@ public class NotesCommand extends Command {
 
                 sm = new SendMessage(message.getChatId().toString(), text);
                 sm.setReplyToMessageId(message.getMessageId());
-                instance.execute(sm);
+                instance.telegramClient.execute(sm);
                 break;
             case "get":
                 noteName = message.getText().trim().split(" ")[0].substring(1).split("\n")[0];
@@ -271,7 +271,7 @@ public class NotesCommand extends Command {
                         sa.setCaption(text);
                         sa.setReplyToMessageId(message.getMessageId());
                         sa.setReplyMarkup(keyboard);
-                        instance.execute(sa);
+                        instance.telegramClient.execute(sa);
                         break;
                     case TYPE_DOCUMENT:
                         SendDocument sd = new SendDocument(message.getChatId().toString(), new InputFile(fileID));
@@ -281,7 +281,7 @@ public class NotesCommand extends Command {
                         sd.setCaption(text);
                         sd.setReplyToMessageId(message.getMessageId());
                         sd.setReplyMarkup(keyboard);
-                        instance.execute(sd);
+                        instance.telegramClient.execute(sd);
                         break;
                     case TYPE_PHOTO:
                         SendPhoto sp = new SendPhoto(message.getChatId().toString(), new InputFile(fileID));
@@ -291,13 +291,13 @@ public class NotesCommand extends Command {
                         sp.setCaption(text);
                         sp.setReplyToMessageId(message.getMessageId());
                         sp.setReplyMarkup(keyboard);
-                        instance.execute(sp);
+                        instance.telegramClient.execute(sp);
                         break;
                     case TYPE_STICKER:
                         SendSticker ss = new SendSticker(message.getChatId().toString(), new InputFile(fileID));
                         ss.setReplyToMessageId(message.getMessageId());
                         ss.setReplyMarkup(keyboard);
-                        instance.execute(ss);
+                        instance.telegramClient.execute(ss);
                         break;
                     case TYPE_TEXT:
                         sm = new SendMessage(message.getChatId().toString(), text);
@@ -307,7 +307,7 @@ public class NotesCommand extends Command {
                         sm.setDisableWebPagePreview(true);
                         sm.setReplyToMessageId(message.getMessageId());
                         sm.setReplyMarkup(keyboard);
-                        instance.execute(sm);
+                        instance.telegramClient.execute(sm);
                         break;
                     case TYPE_VIDEO:
                         SendVideo sv = new SendVideo(message.getChatId().toString(), new InputFile(fileID));
@@ -317,7 +317,7 @@ public class NotesCommand extends Command {
                         sv.setCaption(text);
                         sv.setReplyToMessageId(message.getMessageId());
                         sv.setReplyMarkup(keyboard);
-                        instance.execute(sv);
+                        instance.telegramClient.execute(sv);
                         break;
                 }
                 break;

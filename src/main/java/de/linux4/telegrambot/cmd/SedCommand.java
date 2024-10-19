@@ -3,7 +3,7 @@ package de.linux4.telegrambot.cmd;
 import com.google.common.base.Joiner;
 import de.linux4.telegrambot.Linux4Bot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.Arrays;
@@ -53,6 +53,6 @@ public class SedCommand extends Command {
 
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
         if (message.getReplyToMessage() != null) sm.setReplyToMessageId(message.getReplyToMessage().getMessageId());
-        instance.execute(sm);
+        instance.telegramClient.execute(sm);
     }
 }

@@ -3,7 +3,7 @@ package de.linux4.telegrambot.cmd;
 import de.linux4.telegrambot.Linux4Bot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class DeleteCommand extends Command {
@@ -32,14 +32,14 @@ public class DeleteCommand extends Command {
         if (message.getReplyToMessage() != null) {
             DeleteMessage dm = DeleteMessage.builder().chatId(message.getChatId().toString())
                     .messageId(message.getReplyToMessage().getMessageId()).build();
-            instance.execute(dm);
+            instance.telegramClient.execute(dm);
             dm = DeleteMessage.builder().chatId(message.getChatId().toString())
                     .messageId(message.getMessageId()).build();
-            instance.execute(dm);
+            instance.telegramClient.execute(dm);
         } else {
             SendMessage sm = new SendMessage(message.getChatId().toString(), "Message required!");
             sm.setReplyToMessageId(message.getMessageId());
-            instance.execute(sm);
+            instance.telegramClient.execute(sm);
         }
     }
 }

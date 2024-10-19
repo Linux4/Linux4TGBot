@@ -1,9 +1,7 @@
 package de.linux4.telegrambot;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,8 +12,6 @@ public class Config {
 
     @JsonProperty("BotToken")
     public String botToken;
-    @JsonProperty("BotUserName")
-    public String botUserName;
     @JsonProperty("OwnerUserName")
     public String ownerUserName;
 

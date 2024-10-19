@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,9 +92,9 @@ public class MessageUtilities {
         text.append(matcher.replaceAll(""));
 
         if (buttons.size() > 0) {
-            InlineKeyboardMarkup.InlineKeyboardMarkupBuilder builder = InlineKeyboardMarkup.builder();
+            InlineKeyboardMarkup.InlineKeyboardMarkupBuilder<?, ?> builder = InlineKeyboardMarkup.builder();
             for (List<InlineKeyboardButton> row : buttons) {
-                builder.keyboardRow(row);
+                builder.keyboardRow(new InlineKeyboardRow(row));
             }
             return builder.build();
         }

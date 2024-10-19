@@ -1,19 +1,22 @@
 package de.linux4.telegrambot;
 
 import de.linux4.telegrambot.cmd.*;
-import org.telegram.telegrambots.bots.DefaultBotOptions;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
+import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
+import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.GetMe;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.*;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,20 +30,21 @@ import java.util.List;
 
 import static de.linux4.telegrambot.TelegramConstants.COMMAND_PREFIX;
 
-public class Linux4Bot extends TelegramLongPollingBot {
+public class Linux4Bot implements LongPollingSingleThreadUpdateConsumer {
 
     public static void main(String[] args) {
         try {
             Config config = Config.loadFromFile(new java.io.File("settings.json"));
 
-            TelegramBotsApi botApi = new TelegramBotsApi(DefaultBotSession.class);
-            botApi.registerBot(new Linux4Bot(config));
+            TelegramBotsLongPollingApplication botsApplication = new TelegramBotsLongPollingApplication();
+            botsApplication.registerBot(config.botToken, new Linux4Bot(config));
         } catch (TelegramApiException | IOException e) {
             e.printStackTrace();
         }
     }
 
     private final Config config;
+    public final TelegramClient telegramClient;
     public final List<Command> commands = new ArrayList<>();
     public Connection mysql;
     public Cron cron = new Cron();
@@ -48,17 +52,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
     public final GPT4All gpt4All;
 
     public Linux4Bot(Config config) {
-        super(new DefaultBotOptions() {
-            @Override
-            public List<String> getAllowedUpdates() {
-                // All updates
-                return List.of("message", "edited_message", "channel_post", "edited_channel_post", "inline_query",
-                        "chosen_inline_result", "callback_query", "shipping_query", "pre_checkout_query", "poll",
-                        "poll_answer", "my_chat_member", "chat_member", "chat_join_request");
-            }
-        });
-
         this.config = config;
+        this.telegramClient = new OkHttpTelegramClient(config.botToken);
 
         connect();
 
@@ -106,17 +101,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
     }
 
     @Override
-    public String getBotUsername() {
-        return config.botUserName;
-    }
-
-    @Override
-    public String getBotToken() {
-        return config.botToken;
-    }
-
-    @Override
-    public void onUpdateReceived(Update update) {
+    public void consume(Update update) {
         if (mysql == null) {
             System.err.println("Database not connected!");
             return;
@@ -136,7 +121,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
             DeleteMessage dm = DeleteMessage.builder().chatId(update.getMessage().getChatId()).messageId(update.getMessage().getMessageId())
                     .build();
             try {
-                execute(dm);
+                telegramClient.execute(dm);
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
@@ -149,7 +134,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 boolean allowed = false;
                 GetChatAdministrators administrators = GetChatAdministrators.builder()
                         .chatId(update.getMyChatMember().getChat().getId().toString()).build();
-                for (ChatMember admin : execute(administrators)) {
+                for (ChatMember admin : telegramClient.execute(administrators)) {
                     if (config.ownerUserName.equalsIgnoreCase(admin.getUser().getUserName())) {
                         allowed = true;
                         break;
@@ -159,8 +144,8 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 if (!allowed) {
                     SendMessage sm = new SendMessage(update.getMyChatMember().getChat().getId().toString(),
                             "This group is not authorized to use the bot!");
-                    execute(sm);
-                    execute(LeaveChat.builder().chatId(update.getMyChatMember().getChat().getId().toString()).build());
+                    telegramClient.execute(sm);
+                    telegramClient.execute(LeaveChat.builder().chatId(update.getMyChatMember().getChat().getId().toString()).build());
                 }
             }
         } catch (TelegramApiException ignored) {
@@ -178,7 +163,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 UserUtilities.setUserName(this, user.getId(), user.getUserName());
 
                 try {
-                    if (user.getId().equals(this.getMe().getId()))
+                    if (user.getId().equals(getMe().getId()))
                         continue;
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
@@ -224,9 +209,9 @@ public class Linux4Bot extends TelegramLongPollingBot {
                                 try {
                                     BanChatMember ban = BanChatMember.builder().chatId(update.getMessage().getChatId().toString())
                                             .userId(user.getId()).build();
-                                    Linux4Bot.this.execute(ban);
+                                    telegramClient.execute(ban);
                                     UnbanChatMember unban = UnbanChatMember.builder().chatId(ban.getChatId()).userId(ban.getUserId()).build();
-                                    Linux4Bot.this.execute(unban);
+                                    telegramClient.execute(unban);
                                 } catch (TelegramApiException e) {
                                     e.printStackTrace();
                                 }
@@ -237,7 +222,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         }));
 
                         captchaKb = InlineKeyboardMarkup.builder().keyboardRow(
-                                List.of(InlineKeyboardButton.builder().callbackData("captcha_" + user.getId())
+                                new InlineKeyboardRow(InlineKeyboardButton.builder().callbackData("captcha_" + user.getId())
                                         .text("Click here to prove you're human").build())
                         ).build();
                     }
@@ -246,7 +231,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     sm.setEntities(entities);
                     sm.setReplyMarkup(captchaKb);
                     try {
-                        execute(sm);
+                        telegramClient.execute(sm);
                     } catch (TelegramApiException e) {
                         e.printStackTrace();
                     }
@@ -264,7 +249,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                 DeleteMessage dm = DeleteMessage.builder().messageId(update.getMessage().getMessageId())
                         .chatId(String.valueOf(update.getMessage().getChatId())).build();
                 try {
-                    execute(dm);
+                    telegramClient.execute(dm);
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                 }
@@ -278,7 +263,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     if (commandName.equalsIgnoreCase(otherCommandName)) {
                         try {
                             command.callback(update.getCallbackQuery());
-                            execute(AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId()).build());
+                            telegramClient.execute(AnswerCallbackQuery.builder().callbackQueryId(update.getCallbackQuery().getId()).build());
                         } catch (TelegramApiException e) {
                             e.printStackTrace();
                         }
@@ -376,7 +361,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                         SendMessage sm = new SendMessage(update.getMessage().getChatId().toString(), filterAction);
                         sm.setReplyToMessageId(update.getMessage().getMessageId());
                         try {
-                            Message reply = execute(sm);
+                            Message reply = telegramClient.execute(sm);
 
                             if (filterAction.startsWith(COMMAND_PREFIX)) {
                                 // is a command
@@ -400,9 +385,13 @@ public class Linux4Bot extends TelegramLongPollingBot {
         }
     }
 
+    public User getMe() throws TelegramApiException {
+        return telegramClient.execute(new GetMe());
+    }
+
     public boolean enforceChatAdmin(Message message) throws TelegramApiException {
         GetChatAdministrators admins = GetChatAdministrators.builder().chatId(message.getChatId().toString()).build();
-        for (ChatMember member : execute(admins)) {
+        for (ChatMember member : telegramClient.execute(admins)) {
             if (member.getUser().getId().equals(message.getFrom().getId())) {
                 return true;
             }
@@ -410,7 +399,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
         SendMessage sm = new SendMessage(message.getChatId().toString(), "You're not Admin in this group!");
         sm.setReplyToMessageId(message.getMessageId());
-        execute(sm);
+        telegramClient.execute(sm);
         return false;
     }
 
@@ -426,7 +415,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
                     if (userId != null) {
                         GetChatMember member = GetChatMember.builder().chatId(message.getChatId().toString())
                                 .userId(userId).build();
-                        User user = execute(member).getUser();
+                        User user = telegramClient.execute(member).getUser();
 
                         if (user != null) {
                             UserUtilities.setUserName(this, user.getId(), user.getUserName());
@@ -436,7 +425,7 @@ public class Linux4Bot extends TelegramLongPollingBot {
 
                     SendMessage sm = new SendMessage(message.getChatId().toString(), "Unknown user!");
                     sm.setReplyToMessageId(message.getMessageId());
-                    execute(sm);
+                    telegramClient.execute(sm);
                 } else if (entity.getType().equals(EntityType.TEXTMENTION)) {
                     return entity.getUser();
                 }

@@ -6,10 +6,10 @@ import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdm
 import org.telegram.telegrambots.meta.api.methods.groupadministration.RestrictChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.ChatPermissions;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
@@ -87,7 +87,7 @@ public class TMuteCommand extends Command {
                 boolean admin = false;
                 GetChatAdministrators admins = GetChatAdministrators.builder().chatId(message.getChatId().toString())
                         .build();
-                for (ChatMember member : instance.execute(admins)) {
+                for (ChatMember member : instance.telegramClient.execute(admins)) {
                     if (member.getUser().getId().equals(user.getId())) {
                         admin = true;
                         break;
@@ -104,10 +104,18 @@ public class TMuteCommand extends Command {
                         text += MessageUtilities.mentionUser(entities, user, text.length()) + " until " + new Date((long) dateEnd * 1000) + "!";
                         RestrictChatMember restrict = RestrictChatMember.builder().userId(user.getId())
                                 .chatId(message.getChatId().toString())
-                                .permissions(ChatPermissions.builder().canSendMessages(false)
-                                        .canSendMediaMessages(false).canSendOtherMessages(false).build())
+                                .permissions(ChatPermissions.builder()
+                                        .canSendMessages(false)
+                                        .canSendAudios(false)
+                                        .canSendPolls(false)
+                                        .canSendDocuments(false)
+                                        .canSendPhotos(false)
+                                        .canSendVideos(false)
+                                        .canSendVideoNotes(false)
+                                        .canSendVoiceNotes(false)
+                                        .canSendOtherMessages(false).build())
                                 .untilDate(dateEnd).build();
-                        instance.execute(restrict);
+                        instance.telegramClient.execute(restrict);
                     }
                 }
             } else { // unmute
@@ -117,18 +125,25 @@ public class TMuteCommand extends Command {
                         .chatId(message.getChatId().toString())
                         .permissions(ChatPermissions.builder().canSendMessages(true)
                                 .canAddWebPagePreviews(true)
-                                .canSendMediaMessages(true).canSendOtherMessages(true)
+                                .canSendAudios(true)
+                                .canSendPolls(true)
+                                .canSendDocuments(true)
+                                .canSendPhotos(true)
+                                .canSendVideos(true)
+                                .canSendVideoNotes(true)
+                                .canSendVoiceNotes(true)
+                                .canSendOtherMessages(true)
                                 .canInviteUsers(true)
                                 .canPinMessages(true)
                                 .canChangeInfo(true)
                                 .canSendPolls(true).build()).build();
-                instance.execute(restrict);
+                instance.telegramClient.execute(restrict);
             }
         }
 
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
         sm.setEntities(entities);
         sm.setReplyToMessageId(message.getMessageId());
-        instance.execute(sm);
+        instance.telegramClient.execute(sm);
     }
 }

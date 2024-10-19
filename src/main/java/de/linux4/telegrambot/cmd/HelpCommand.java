@@ -4,9 +4,10 @@ import de.linux4.telegrambot.Linux4Bot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
@@ -66,13 +67,16 @@ public class HelpCommand extends Command {
             }
 
             InlineKeyboardMarkup back = InlineKeyboardMarkup.builder()
-                    .keyboardRow(List.of(InlineKeyboardButton.builder().text("Back").callbackData("help_").build()))
+                    .keyboardRow(new InlineKeyboardRow(InlineKeyboardButton.builder()
+                            .text("Back").callbackData("help_").build()))
                     .build();
-            instance.execute(EditMessageText.builder().chatId(query.getMessage().getChatId().toString())
+            instance.telegramClient.execute(EditMessageText.builder().chatId(query.getMessage().getChatId().toString())
                     .messageId(query.getMessage().getMessageId()).text(text)
                     .replyMarkup(back).parseMode("MARKDOWNV2").build());
         } else { // Back
-            execute("callback", query.getMessage());
+            if (query.getMessage() instanceof Message) {
+                execute("callback", (Message) query.getMessage());
+            }
         }
     }
 
@@ -91,9 +95,9 @@ public class HelpCommand extends Command {
                 row++;
                 row = row % 3;
             }
-            InlineKeyboardMarkup.InlineKeyboardMarkupBuilder keyboardBuilder = InlineKeyboardMarkup.builder();
+            InlineKeyboardMarkup.InlineKeyboardMarkupBuilder<?, ?> keyboardBuilder = InlineKeyboardMarkup.builder();
             for (List<InlineKeyboardButton> buttons : rows) {
-                keyboardBuilder.keyboardRow(buttons);
+                keyboardBuilder.keyboardRow(new InlineKeyboardRow(buttons));
             }
 
             String text = "*Help*\n\n";
@@ -107,25 +111,25 @@ public class HelpCommand extends Command {
                         .messageId(message.getMessageId())
                         .replyMarkup(keyboardBuilder.build())
                         .parseMode("MARKDOWNV2").build();
-                instance.execute(em);
+                instance.telegramClient.execute(em);
             } else {
                 SendMessage sm = new SendMessage(message.getChatId().toString(), text);
                 sm.setReplyToMessageId(message.getMessageId());
                 sm.setReplyMarkup(keyboardBuilder.build());
                 sm.setParseMode("MARKDOWNV2");
-                instance.execute(sm);
+                instance.telegramClient.execute(sm);
             }
         } else {
             SendMessage sm = new SendMessage(message.getChatId().toString(), "Contact me in PM for help!");
             sm.setReplyToMessageId(message.getMessageId());
 
             InlineKeyboardMarkup.InlineKeyboardMarkupBuilder keyboardBuilder = InlineKeyboardMarkup.builder().keyboardRow(
-                    List.of(InlineKeyboardButton.builder().text("Click me for help!")
+                    new InlineKeyboardRow(InlineKeyboardButton.builder().text("Click me for help!")
                             .url("https://t.me/" + instance.getMe().getUserName() + "?start=help_")
                             .build()));
             sm.setReplyMarkup(keyboardBuilder.build());
 
-            instance.execute(sm);
+            instance.telegramClient.execute(sm);
         }
     }
 }

@@ -4,7 +4,7 @@ import com.google.common.base.Splitter;
 import com.hexadevlabs.gpt4all.LLModel;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.nio.file.Files;
@@ -92,7 +92,7 @@ public class GPT4All {
 
                         SendMessage sm = new SendMessage(message.getChatId().toString(), "Thinking...");
                         sm.setReplyToMessageId(message.getMessageId());
-                        int editId = instance.execute(sm).getMessageId();
+                        int editId = instance.telegramClient.execute(sm).getMessageId();
 
                         String prompt = message.getText();
                         if (command != null && !command.isEmpty())
@@ -110,14 +110,14 @@ public class GPT4All {
                                 em.setChatId(message.getChatId().toString());
                                 em.setMessageId(editId);
                                 em.enableMarkdown(true);
-                                instance.execute(em);
+                                instance.telegramClient.execute(em);
 
                                 first = false;
                             } else {
                                 SendMessage msg = new SendMessage(message.getChatId().toString(), repl);
                                 msg.setReplyToMessageId(editId);
                                 msg.enableMarkdown(true);
-                                editId = instance.execute(sm).getMessageId();
+                                editId = instance.telegramClient.execute(sm).getMessageId();
                             }
                         }
                     } catch (TelegramApiException ex) {

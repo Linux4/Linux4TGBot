@@ -4,7 +4,7 @@ import com.google.common.base.Joiner;
 import de.linux4.telegrambot.Linux4Bot;
 import de.linux4.telegrambot.MessageUtilities;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.PreparedStatement;
@@ -73,6 +73,6 @@ public class SetRulesCommand extends Command {
 
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
         sm.setReplyToMessageId(message.getMessageId());
-        instance.execute(sm);
+        instance.telegramClient.execute(sm);
     }
 }

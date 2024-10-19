@@ -6,10 +6,10 @@ import org.telegram.telegrambots.meta.api.methods.groupadministration.BanChatMem
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.UnbanChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class BanCommand extends Command {
             boolean admin = false;
             GetChatAdministrators admins = GetChatAdministrators.builder().chatId(message.getChatId().toString())
                     .build();
-            for (ChatMember member : instance.execute(admins)) {
+            for (ChatMember member : instance.telegramClient.execute(admins)) {
                 if (member.getUser().getId().equals(user.getId())) {
                     admin = true;
                     break;
@@ -67,12 +67,12 @@ public class BanCommand extends Command {
                     if (!isUnban) {
                         BanChatMember ban = BanChatMember.builder().chatId(message.getChatId().toString())
                                 .userId(user.getId()).untilDate(0).build();
-                        instance.execute(ban);
+                        instance.telegramClient.execute(ban);
                     }
                     if (isKick || isUnban) {
                         UnbanChatMember unban = UnbanChatMember.builder().chatId(message.getChatId().toString())
                                 .userId(user.getId()).build();
-                        instance.execute(unban);
+                        instance.telegramClient.execute(unban);
                     }
                     text = (isKick ? "Kicked" : (isUnban ? "Unbanned" : "Banned")) + " ";
                     text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
@@ -86,6 +86,6 @@ public class BanCommand extends Command {
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
         sm.setEntities(entities);
         sm.setReplyToMessageId(message.getMessageId());
-        instance.execute(sm);
+        instance.telegramClient.execute(sm);
     }
 }

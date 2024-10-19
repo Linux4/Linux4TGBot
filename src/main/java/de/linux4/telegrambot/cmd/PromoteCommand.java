@@ -6,9 +6,9 @@ import de.linux4.telegrambot.MessageUtilities;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.PromoteChatMember;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.SetChatAdministratorCustomTitle;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ public class PromoteCommand extends Command {
             text = "Promoted ";
             text += MessageUtilities.mentionUser(entities, user, text.length()) + "!";
             try {
-                if (instance.execute(promote)) {
+                if (instance.telegramClient.execute(promote)) {
 
                     if (rank.length() > 0) {
                         try {
@@ -69,7 +69,7 @@ public class PromoteCommand extends Command {
                         SetChatAdministratorCustomTitle title = SetChatAdministratorCustomTitle.builder()
                                 .chatId(message.getChatId().toString())
                                 .userId(user.getId()).customTitle(rank).build();
-                        instance.execute(title);
+                        instance.telegramClient.execute(title);
                     }
                 }
             } catch (TelegramApiException ex) {
@@ -82,6 +82,6 @@ public class PromoteCommand extends Command {
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
         sm.setEntities(entities);
         sm.setReplyToMessageId(message.getMessageId());
-        instance.execute(sm);
+        instance.telegramClient.execute(sm);
     }
 }

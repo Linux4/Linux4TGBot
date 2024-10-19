@@ -2,8 +2,8 @@ package de.linux4.telegrambot.cmd;
 
 import de.linux4.telegrambot.Linux4Bot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class IDCommand extends Command {
@@ -38,6 +38,6 @@ public class IDCommand extends Command {
 
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
         sm.setParseMode("HTML");
-        instance.execute(sm);
+        instance.telegramClient.execute(sm);
     }
 }

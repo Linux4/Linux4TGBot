@@ -2,12 +2,10 @@ package de.linux4.telegrambot.cmd;
 
 import de.linux4.telegrambot.Linux4Bot;
 import de.linux4.telegrambot.Settings;
-import org.telegram.telegrambots.meta.api.methods.groupadministration.RestrictChatMember;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.ChatPermissions;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class CaptchaCommand extends Command {
@@ -51,7 +49,7 @@ public class CaptchaCommand extends Command {
 
         SendMessage sm = new SendMessage(message.getChatId().toString(), text);
         sm.setReplyToMessageId(message.getMessageId());
-        instance.execute(sm);
+        instance.telegramClient.execute(sm);
     }
 
     @Override
@@ -59,13 +57,15 @@ public class CaptchaCommand extends Command {
         long userId = Long.parseLong(query.getData().split("_")[1]);
 
         if (userId == query.getFrom().getId()) {
-            instance.execute(EditMessageText.builder().chatId(query.getMessage().getChatId().toString())
-                    .messageId(query.getMessage().getMessageId())
-                    .text(query.getMessage().getText()).entities(query.getMessage().getEntities())
-                    .replyMarkup(null).build());
-            instance.captcha.get(query.getMessage().getChatId()).remove(userId);
-            if (instance.captcha.get(query.getMessage().getChatId()).size() == 0)
-                instance.captcha.remove(query.getMessage().getChatId());
+            if (query.getMessage() instanceof Message) {
+                instance.telegramClient.execute(EditMessageText.builder().chatId(query.getMessage().getChatId().toString())
+                        .messageId(query.getMessage().getMessageId())
+                        .text(((Message)query.getMessage()).getText()).entities(((Message)query.getMessage()).getEntities())
+                        .replyMarkup(null).build());
+                instance.captcha.get(query.getMessage().getChatId()).remove(userId);
+                if (instance.captcha.get(query.getMessage().getChatId()).size() == 0)
+                    instance.captcha.remove(query.getMessage().getChatId());
+            }
         }
     }
 }

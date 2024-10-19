@@ -2,10 +2,9 @@ package de.linux4.telegrambot.cmd;
 
 import de.linux4.telegrambot.Linux4Bot;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 

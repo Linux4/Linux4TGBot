@@ -1,6 +1,5 @@
 {
    "BotToken":"REPLACEME",
-   "BotUserName":"Linux4Bot",
    "OwnerUserName":"Linux4",
    "MariaDBHost":"10.2.0.1",
    "MariaDBPort":3306,
