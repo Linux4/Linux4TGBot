@@ -14,7 +14,7 @@ public abstract class Command {
     public record HelpInfo(String parameters, String description){};
 
     public static final Category CATEGORY_ADMIN = new Category("Admin", "Make it easy to promote and demote users with the admin module\\!");
-    public static final Category CATEGORY_AI = new Category("AI", "GPT4All related commands\\.");
+    public static final Category CATEGORY_AI = new Category("AI", "AI related commands\\.");
     public static final Category CATEGORY_BANS = new Category("Bans", "Some people need to be publicly banned; spammers," +
             " annoyances, or just trolls\\.\n\n" +
             "This module allows you to do that easily, by exposing some common actions, so everyone will see\\!");

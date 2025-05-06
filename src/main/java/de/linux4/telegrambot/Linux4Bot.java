@@ -49,7 +49,7 @@ public class Linux4Bot implements LongPollingSingleThreadUpdateConsumer {
     public Connection mysql;
     public Cron cron = new Cron();
     public final HashMap<Long, HashSet<Long>> captcha = new HashMap<>();
-    public final GPT4All gpt4All;
+    public final ChatGPT chatGpt;
 
     public Linux4Bot(Config config) {
         this.config = config;
@@ -78,13 +78,13 @@ public class Linux4Bot implements LongPollingSingleThreadUpdateConsumer {
 
         cron.start();
 
-        if (config.gpt4AllModel != null && !config.gpt4AllModel.isEmpty()) {
+        if (config.chatGptAccessToken != null && !config.chatGptAccessToken.isEmpty()) {
             this.commands.add(new AskCommand(this));
 
-            gpt4All = new GPT4All(this, Path.of(".", config.gpt4AllModel));
-            gpt4All.start();
+            chatGpt = new ChatGPT(this, config.chatGptAccessToken);
+            chatGpt.start();
         } else {
-            gpt4All = null;
+            chatGpt = null;
         }
     }
 

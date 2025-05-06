@@ -1,6 +1,6 @@
 package de.linux4.telegrambot.cmd;
 
-import de.linux4.telegrambot.GPT4All;
+import de.linux4.telegrambot.ChatGPT;
 import de.linux4.telegrambot.Linux4Bot;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -18,7 +18,7 @@ public class AskCommand extends Command {
 
     @Override
     public HelpInfo getHelpInfo(String command) {
-        return new HelpInfo("", "Ask GPT4All a question\\.");
+        return new HelpInfo("", "Ask AI a question\\.");
     }
 
     @Override
@@ -28,6 +28,6 @@ public class AskCommand extends Command {
 
     @Override
     public void execute(String command, Message message) throws TelegramApiException {
-        instance.gpt4All.enqueue(new GPT4All.Request(message, command));
+        instance.chatGpt.enqueue(new ChatGPT.Request(message, command));
     }
 }

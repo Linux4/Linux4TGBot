@@ -26,8 +26,8 @@ public class Config {
     @JsonProperty("MariaDBPassword")
     public String mariaDbPassword;
 
-    @JsonProperty("GPT4AllModel")
-    public String gpt4AllModel;
+    @JsonProperty("ChatGPTAccessToken")
+    public String chatGptAccessToken;
 
     public static Config loadFromFile(File file) throws IOException {
         StringBuilder contentBuilder = new StringBuilder();

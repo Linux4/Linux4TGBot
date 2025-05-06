@@ -6,5 +6,5 @@
    "MariaDBDatabase":"linux4tgbot",
    "MariaDBUserName":"linux4",
    "MariaDBPassword":"linux4!",
-   "GPT4AllModel":"gpt4all-model.gguf"
+   "ChatGPTAccessToken":"REPLACEME"
 }

@@ -1,42 +1,35 @@
 package de.linux4.telegrambot;
 
 import com.google.common.base.Splitter;
-import com.hexadevlabs.gpt4all.LLModel;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.ChatModel;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static de.linux4.telegrambot.TelegramConstants.COMMAND_PREFIX;
 import static de.linux4.telegrambot.TelegramConstants.MAX_MESSAGE_LENGTH;
 
-public class GPT4All {
+public class ChatGPT {
 
     public record Request(Message message, String command) {}
 
     private final Linux4Bot instance;
-    private final LLModel model;
-    private final LLModel.GenerationConfig config;
+    private final String accessToken;
     private final Thread handlerThread;
     private boolean stop;
     private final ConcurrentLinkedQueue<Request> queue = new ConcurrentLinkedQueue<>();
 
-    public GPT4All(Linux4Bot instance, Path modelPath) {
+    public ChatGPT(Linux4Bot instance, String accessToken) {
         this.instance = instance;
+        this.accessToken = accessToken;
 
-        if (Files.exists(modelPath)) {
-            model = new LLModel(modelPath);
-            model.setThreadCount(Runtime.getRuntime().availableProcessors());
-        } else
-            model = null;
-
-        config = LLModel.config().withNPredict(4096).build();
         handlerThread = new Thread(this::handleRequests);
     }
 
@@ -53,18 +46,23 @@ public class GPT4All {
 
     public String sendMessage(String message) {
         if (!isAvailable()) {
-            return "Model is not provided, GPT4All extension isn't available!";
+            return "AccessToken is not provided, ChatGPT extension isn't available!";
         }
 
-        LLModel.ChatCompletionResponse response = model.chatCompletion(
-                List.of(Map.of("role", "system", "content", generateInstructions()),
-                        Map.of("role", "user", "content", message)), config);
+        OpenAIClient client = OpenAIOkHttpClient.builder().apiKey(accessToken).build();
 
-        return response.choices.get(0).get("content");
+        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                .addSystemMessage(generateInstructions())
+                .addUserMessage(message)
+                .model(ChatModel.GPT_4O_MINI)
+                .build();
+        ChatCompletion chatCompletion = client.chat().completions().create(params);
+
+        return chatCompletion.choices().get(0).message().content().get();
     }
 
     public boolean isAvailable() {
-        return model != null;
+        return accessToken != null && !accessToken.isEmpty();
     }
 
     public void start() {
@@ -98,9 +96,9 @@ public class GPT4All {
                         if (command != null && !command.isEmpty())
                             prompt = prompt.substring(COMMAND_PREFIX.length() + command.length());
 
-                        String repl = instance.gpt4All.sendMessage(prompt);
+                        String repl = instance.chatGpt.sendMessage(prompt);
                         if (repl == null || repl.isEmpty()) {
-                            repl = "(Empty response from GPT4All)";
+                            repl = "(Empty response from ChatGPT)";
                         }
 
                         boolean first = true;
