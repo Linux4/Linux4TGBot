@@ -100,6 +100,17 @@ public class Linux4Bot implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
+    private boolean shouldFilterMessage(Message message) {
+        // Ban premium stickers
+        if (message.hasSticker() && message.getSticker().getPremiumAnimation() != null)
+            return true;
+        // Ban messages sent as channel
+        if (message.getSenderChat() != null)
+            return true;
+
+        return false;
+    }
+
     @Override
     public void consume(Update update) {
         if (mysql == null) {
@@ -116,8 +127,8 @@ public class Linux4Bot implements LongPollingSingleThreadUpdateConsumer {
             connect();
         }
 
-        // Ban premium stickers
-        if (update.hasMessage() && update.getMessage().hasSticker() && update.getMessage().getSticker().getPremiumAnimation() != null) {
+        // Filter certain message types by default
+        if (update.hasMessage() && shouldFilterMessage(update.getMessage())) {
             DeleteMessage dm = DeleteMessage.builder().chatId(update.getMessage().getChatId()).messageId(update.getMessage().getMessageId())
                     .build();
             try {
